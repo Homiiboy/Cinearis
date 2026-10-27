@@ -123,3 +123,44 @@ Tests:
 cd backend
 python -m unittest discover -s tests -v
 ```
+
+
+## Phase 5 – Jellyfin-Abgleich (v0.5.0)
+
+Cinearis verbindet sich **nur lesend** mit deinem vorhandenen Jellyfin-/Velaris-Server. Es werden keine Medien gelöscht, keine Jellyfin-Metadaten geändert und keine Abspielstände geschrieben.
+
+1. Erstelle in Jellyfin im Administrator-Dashboard einen **separaten API-Schlüssel** für Cinearis.
+2. Trage im lokalen Cinearis-Ordner in `.env` die beiden Felder ein (keine Zugangsdaten ins öffentliche GitHub-Repository!):
+
+```dotenv
+JELLYFIN_URL=http://host.docker.internal:8096
+JELLYFIN_API_KEY=HIER_DEIN_JELLYFIN_SCHLUESSEL
+```
+
+Wenn Jellyfin in einem eigenen Docker-Netzwerk läuft, kann stattdessen die interne DNS-Adresse des Jellyfin-Containers genutzt werden, sofern Cinearis dasselbe Netzwerk verwendet. Alternativ eine vom Cinearis-Backend-Container erreichbare LAN-Adresse eintragen. `localhost` im Container ist **nicht** dein ZimaOS-Host. Verwende in einem fremden oder öffentlichen Netzwerk HTTPS; die Verbindung soll auf einem vertrauenswürdigen Netzwerk bleiben.
+
+3. Starte neu: `docker compose up -d --build`.
+4. Öffne **Meine Sammlung → Jellyfin-Bibliothek → Jetzt mit Jellyfin vergleichen**.
+5. Die Karte zeigt die zuletzt gefundenen Filme/Serien/Episoden und den Zeitpunkt des Scans. Die Sammlung markiert eindeutige, fehlende und mehrdeutige Zuordnungen. Ein Klick auf eine Serie zeigt die **in Jellyfin tatsächlich gefundenen** Episodennummern je Staffel.
+
+API:
+- `GET /api/jellyfin/status` – Konfiguration und letzter Scan ohne API-Schlüssel
+- `POST /api/jellyfin/sync` – synchronisiert einen lokalen Metadaten-Schnappschuss (max. 50.000 Einträge)
+- `GET /api/jellyfin/matches` – Vergleiche gegen die aktuelle Cinearis-Sammlung
+
+**Zuordnungsregeln:** TMDB-ID bei Filmen/Serien, wenn verfügbar; andernfalls nur eindeutige normalisierte Titel/Alternativtitel mit plausibler Jahreszahl. Bei Anime wird in dieser Version oft der Name verwendet, da AniList-IDs und Jellyfin-TMDB-IDs nicht direkt identisch sind. Mehrdeutige Treffer werden nicht automatisch aufgelöst. Episoden gehören ausschließlich zu der jeweiligen Jellyfin-`SeriesId`; Staffel 0 bezeichnet Specials.
+
+**Wichtig:** Die existierenden Labels `Wunschliste/Vorhanden` sind persönliche Sammlungsstatus. Der Jellyfin-Abgleich wird **separat** gezeigt und überschreibt diese Werte und den Sehfortschritt nicht. Ohne bekannten Soll-Episodenumfang kann Cinearis nicht sagen, wie viele Folgen insgesamt fehlen; angezeigt werden nur tatsächlich gefundene Episoden. Spezialfälle wie verschachtelte Serien, alternative Staffelzählungen oder gemischte Bibliotheken müssen zuhause getestet werden.
+
+**Sicherheit:** API-Schlüssel hat Zugriff auf Informationen deines Servers. Cinearis besitzt noch keine eigene Anmeldung; daher **nicht öffentlich zugänglich machen**. Ein Jellyfin-API-Schlüssel wird nie an das Frontend übertragen.
+
+**Validierung auf ZimaOS:**
+```bash
+docker compose config
+docker compose up -d --build
+curl http://localhost:8088/api/jellyfin/status
+curl http://localhost:8088/api/health
+docker compose logs --tail=100 backend
+```
+
+Zum Aufruf des Scan-Endpunkts eignet sich der Button in der Weboberfläche. Bei Fehlern bleiben zuvor gespeicherte Snapshots bestehen.
