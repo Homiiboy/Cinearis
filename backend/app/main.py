@@ -2,6 +2,7 @@
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
+import json
 from typing import Literal
 
 import httpx
@@ -12,7 +13,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from app.analysis import router as analysis_router
 
-VERSION = "0.2.0"
+from app.metadata import router as metadata_router, provider_detail, provider_search
+
+VERSION = "0.3.0"
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cinearis.db")
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
@@ -33,6 +36,9 @@ class MediaItem(Base):
     provider_id: Mapped[str | None] = mapped_column(String(60), nullable=True)
     poster_url: Mapped[str | None] = mapped_column(String(600), nullable=True)
     release_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    original_title: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    aliases_json: Mapped[str | None] = mapped_column(String(3000), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(1500), nullable=True)
     watch_state: Mapped[str] = mapped_column(String(25), nullable=False, server_default="unwatched")
     season_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     episode_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -46,12 +52,20 @@ class MediaCreate(BaseModel):
     provider_id: str | None = Field(default=None, max_length=60)
     poster_url: str | None = Field(default=None, max_length=600)
     release_year: int | None = Field(default=None, ge=1870, le=2200)
+    original_title: str | None = Field(default=None, max_length=300)
+    aliases: list[str] = Field(default_factory=list, max_length=30)
+    description: str | None = Field(default=None, max_length=1500)
 
     @model_validator(mode="after")
     def validate_provider(self):
         if (self.provider is None) != (self.provider_id is None):
             raise ValueError("provider und provider_id müssen gemeinsam angegeben werden")
         return self
+
+
+class MetadataLink(BaseModel):
+    provider: Literal["tmdb", "anilist"]
+    provider_id: str = Field(min_length=1, max_length=60)
 
 
 class WatchUpdate(BaseModel):
@@ -69,7 +83,9 @@ def as_dict(item: MediaItem):
         "id": item.id, "title": item.title, "kind": item.kind,
         "status": item.status, "provider": item.provider,
         "provider_id": item.provider_id, "poster_url": item.poster_url,
-        "release_year": item.release_year, "watch_state": item.watch_state,
+        "release_year": item.release_year, "original_title": item.original_title,
+        "aliases": json.loads(item.aliases_json or "[]"), "description": item.description,
+        "watch_state": item.watch_state,
         "season_number": item.season_number, "episode_number": item.episode_number,
     }
 
@@ -85,6 +101,9 @@ def migrate_v011():
         "watch_state": "VARCHAR(25) NOT NULL DEFAULT 'unwatched'",
         "season_number": "INTEGER",
         "episode_number": "INTEGER",
+        "original_title": "VARCHAR(300)",
+        "aliases_json": "VARCHAR(3000)",
+        "description": "VARCHAR(1500)",
     }
     with engine.begin() as connection:
         for name, definition in additions.items():
@@ -101,6 +120,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Cinearis API", version=VERSION, lifespan=lifespan)
 app.include_router(analysis_router)
+app.include_router(metadata_router)
 
 
 @app.get("/api/live")
@@ -159,8 +179,49 @@ def create_media(payload: MediaCreate):
             ))
         if matching:
             raise HTTPException(status_code=409, detail="Dieser Titel ist bereits in deiner Sammlung")
-        item = MediaItem(**(payload.model_dump() | {"title": title}))
+        data = payload.model_dump(exclude={"aliases"})
+        data.update({"title": title, "aliases_json": json.dumps(payload.aliases[:30], ensure_ascii=False)[:3000]})
+        item = MediaItem(**data)
         session.add(item)
+        session.commit()
+        session.refresh(item)
+        return as_dict(item)
+
+
+
+@app.patch("/api/media/{item_id}/metadata")
+async def link_metadata(item_id: int, payload: MetadataLink):
+    """User-confirmed external metadata association; never overwrite watch progress."""
+    with Session(engine) as session:
+        item = session.get(MediaItem, item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Titel nicht gefunden")
+        kind = item.kind
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            result = await provider_detail(payload.provider, payload.provider_id, kind, client)
+    except HTTPException:
+        raise
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=502, detail="Metadatenanbieter nicht erreichbar") from exc
+    with Session(engine) as session:
+        item = session.get(MediaItem, item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Titel nicht gefunden")
+        existing = session.scalar(select(MediaItem).where(
+            MediaItem.id != item_id, MediaItem.kind == item.kind,
+            MediaItem.provider == result["provider"], MediaItem.provider_id == result["provider_id"],
+        ))
+        if existing:
+            raise HTTPException(status_code=409, detail="Diese Anbieter-ID wird bereits von einem anderen Titel verwendet")
+        item.title = result["title"]
+        item.original_title = result["original_title"]
+        item.aliases_json = json.dumps(result["aliases"], ensure_ascii=False)[:3000]
+        item.description = result.get("description")
+        item.release_year = result["release_year"]
+        item.poster_url = result["poster_url"]
+        item.provider = result["provider"]
+        item.provider_id = result["provider_id"]
         session.commit()
         session.refresh(item)
         return as_dict(item)
