@@ -8,7 +8,7 @@
 
 Cinearis ist Teil des **Novarion-Ökosystems**. Die selbst gehostete Webanwendung erkennt Titel aus Bildern und – soweit technisch und rechtlich zugänglich – Social-Media-Beiträgen, erstellt eine dauerhaft wachsende persönliche Merkliste und gleicht diese mit **Jellyfin / Velaris** ab. Eine spätere Verbindung zu **ForgeCore** ist geplant.
 
-> **Projektstatus:** Planung · Zielversion: **v0.1.0** · Die folgenden Funktionen sind geplant, noch nicht implementiert.
+> **Projektstatus:** **v0.1.0 – Fundament implementiert** · Docker-Betrieb auf ZimaOS noch nicht praktisch verifiziert · Bildanalyse, Instagram, Jellyfin und ForgeCore folgen in späteren Phasen.
 
 ## ✨ Geplante Funktionen
 
@@ -28,7 +28,7 @@ Alle Phasen sind **geplant**. Versionen bezeichnen Entwicklungsziele, keine bere
 
 | Phase | Zielversion | Umfang | Abnahmekriterium |
 | --- | --- | --- | --- |
-| 1 – Fundament | **v0.1.0** | React/TypeScript-Frontend, FastAPI-Backend, PostgreSQL, Docker Compose, Basis-UI, Konfiguration | Anwendung startet lokal und unter ZimaOS, Healthcheck erfolgreich |
+| 1 – Fundament ✅ implementiert | **v0.1.0** | React/TypeScript-Frontend, FastAPI-Backend, PostgreSQL, Docker Compose, Basis-UI, Konfiguration | Anwendung startet lokal und unter ZimaOS, Healthcheck erfolgreich |
 | 2 – Bildanalyse | **v0.2.0** | Einzel-/Mehrfach-Upload, OCR, austauschbarer Vision-KI-Anbieter, Konfidenz und manuelle Bestätigung | Titelvorschläge werden aus Testbildern angezeigt und korrigierbar gespeichert |
 | 3 – Metadaten | **v0.3.0** | TMDB/AniList-Suche, Titel-Aliase, Poster, Jahreszahlen, ID-Mapping | Erkannte Titel können zuverlässig mit Datensätzen verknüpft werden |
 | 4 – Mediensammlung | **v0.4.0** | Watchlist, individuelle Status, Filter, Suche, Bearbeiten, Duplikatschutz | Wiederholte Erkennung erzeugt keine doppelten Titel |
@@ -65,18 +65,19 @@ Cinearis/
 ├── assets/
 │   ├── .gitkeep
 │   ├── Cinearis.png          # offizielles Projektlogo
-│   └── favicon.ico           # Browser-Favicon (vorbereitet)
-├── frontend/                 # ab Phase 1
-├── backend/                  # ab Phase 1
-├── database/                 # ab Phase 1
-├── docker/                   # ab Phase 1
-├── docs/                     # ab Phase 1
-├── .env.example              # ab Phase 1
-├── docker-compose.yml        # ab Phase 1
-└── README.md
+│   └── favicon.ico           # Browser-Favicon
+├── frontend/                 # React / TypeScript / nginx
+├── backend/                  # FastAPI / SQLAlchemy
+├── docs/
+│   └── SETUP.md              # Installation und Betrieb
+├── .env.example
+├── .gitignore
+└── docker-compose.yml
 ```
 
-Das offizielle Cinearis-Logo liegt bereits unter **`assets/Cinearis.png`** und wird oben in dieser README angezeigt. Aus diesem Motiv wurden Favicon-Varianten (16 × 16, 32 × 32, 48 × 48, .ico, Apple Touch und PWA) vorbereitet; die generierten Varianten müssen noch in `assets/` hochgeladen werden.
+Weitere generierte Favicons können im `assets/`-Ordner liegen.
+
+Das offizielle Cinearis-Logo liegt bereits unter **`assets/Cinearis.png`** und wird oben in dieser README angezeigt. Aus diesem Motiv wurden Favicon-Varianten (16 × 16, 32 × 32, 48 × 48, .ico, Apple Touch und PWA) vorbereitet. Welche Varianten bereits im Repository liegen, ist im Ordner `assets/` ersichtlich.
 
 Sobald `assets/favicon.ico` vorhanden ist, kann die Website z. B. so darauf verweisen:
 
@@ -88,6 +89,20 @@ Sobald `assets/favicon.ico` vorhanden ist, kann die Website z. B. so darauf verw
 ```
 
 Bei einem späteren Build werden die Dateien im statischen öffentlichen Verzeichnis bereitgestellt.
+
+## 🚀 Installation (Phase 1)
+
+```bash
+git clone https://github.com/Homiiboy/Cinearis.git
+cd Cinearis
+cp .env.example .env
+# In .env ein starkes POSTGRES_PASSWORD setzen
+docker compose up -d --build
+```
+
+Danach `http://<SERVER-IP>:8088` öffnen. Für den API-/Datenbankcheck `http://<SERVER-IP>:8088/api/health` aufrufen.
+
+**Ausführliche Anleitung:** [docs/SETUP.md](docs/SETUP.md). **Achtung:** Phase 1 hat noch keine Benutzeranmeldung – nur im privaten Heimnetz betreiben, nicht ungeschützt ins Internet stellen.
 
 ## 🔐 Datenschutz & Sicherheit
 
@@ -107,8 +122,8 @@ Bei einem späteren Build werden die Dateien im statischen öffentlichen Verzeic
 
 - [x] Repository und Entwicklungs-Roadmap
 - [x] Assets-Ordner und Projektlogo
-- [ ] Generierte Favicon-Varianten ins Repository hochladen
-- [ ] v0.1.0 – Projektfundament
+- [x] Favicon.ico im Repository
+- [x] v0.1.0 – Projektfundament implementiert (ZimaOS-Laufzeittest ausstehend)
 - [ ] v0.2.0 – Bildanalyse
 - [ ] v0.3.0 – Metadaten
 - [ ] v0.4.0 – Sammlung
