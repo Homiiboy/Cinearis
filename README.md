@@ -8,11 +8,11 @@
 
 Cinearis ist Teil des **Novarion-Ökosystems**. Die selbst gehostete Webanwendung erkennt Titel aus Bildern und – soweit technisch und rechtlich zugänglich – Social-Media-Beiträgen, erstellt eine dauerhaft wachsende persönliche Merkliste und gleicht diese mit **Jellyfin / Velaris** ab. Eine spätere Verbindung zu **ForgeCore** ist geplant.
 
-> **Projektstatus:** **v0.3.0 – Metadaten und eindeutige Titelzuordnung implementiert** · Docker-Betrieb auf ZimaOS noch nicht praktisch verifiziert · Instagram, Jellyfin und ForgeCore folgen in späteren Phasen.
+> **Projektstatus:** **v0.4.0 – Erweiterte Mediensammlung implementiert** · Docker-Betrieb auf ZimaOS noch nicht praktisch verifiziert · Instagram, Jellyfin und ForgeCore folgen in späteren Phasen.
 
-## ✅ Bereits umgesetzt (bis v0.3.0)
+## ✅ Bereits umgesetzt (bis v0.4.0)
 
-- **Metadaten-Abgleich (v0.3.0):** TMDB/AniList mit deutschen und alternativen Titeln, Originaltiteln, Erscheinungsjahr, Poster, Anbieter-IDs, Textähnlichkeitsranking und bestätigter Zuordnung auch für bereits gespeicherte Titel.\n- **Bild-Upload und Analyse (v0.2.0):** Mehrere Screenshots/Poster gleichzeitig hochladen, lokale OCR mit Tesseract (Deutsch/Englisch), optional externe Vision-KI, Konfidenz, bearbeitbare Kandidaten und bewusste Übernahme in die persönliche Liste.\n- **Manuell suchen:** Filme und Serien über TMDB (eigener API-Schlüssel), Anime über AniList, plus direkte Titel-Erfassung ohne API.
+- **Erweiterte Sammlung (v0.4.0):** Titel, Aliasnamen, Status und Sehstatus filtern; sortieren, Titel/Jahr/Beschreibung bearbeiten, Dubletten mit normalisierten Namen vermeiden, Episoden und Staffeln einzeln abhaken. Specials können als Staffel 0 erfasst werden.\n- **Metadaten-Abgleich (v0.3.0):** TMDB/AniList mit deutschen und alternativen Titeln, Originaltiteln, Erscheinungsjahr, Poster, Anbieter-IDs, Textähnlichkeitsranking und bestätigter Zuordnung auch für bereits gespeicherte Titel.\n- **Bild-Upload und Analyse (v0.2.0):** Mehrere Screenshots/Poster gleichzeitig hochladen, lokale OCR mit Tesseract (Deutsch/Englisch), optional externe Vision-KI, Konfidenz, bearbeitbare Kandidaten und bewusste Übernahme in die persönliche Liste.\n- **Manuell suchen:** Filme und Serien über TMDB (eigener API-Schlüssel), Anime über AniList, plus direkte Titel-Erfassung ohne API.
 - **Titel hinzufügen:** Sammlung mit Dublettenprüfung für Anbieter-IDs und manuell erfasste Namen.
 - **Sehfortschritt:** Filme *gesehen/nicht gesehen*; Serien und Anime *nicht gesehen*, *komplett gesehen*, *bis Staffel/Folge* oder *Staffel gesehen*.
 - **Getrennte Statuswerte:** Ein Titel kann bereits in der Mediathek liegen und dennoch ungesehen sein.
@@ -42,7 +42,7 @@ Alle Phasen sind **geplant**. Versionen bezeichnen Entwicklungsziele, keine bere
 | 1 – Fundament ✅ implementiert | **v0.1.0** | React/TypeScript-Frontend, FastAPI-Backend, PostgreSQL, Docker Compose, Basis-UI, Konfiguration | Anwendung startet lokal und unter ZimaOS, Healthcheck erfolgreich |
 | 2 – Bildanalyse ✅ implementiert (Test ausstehend) | **v0.2.0** | Einzel-/Mehrfach-Upload, OCR, austauschbarer Vision-KI-Anbieter, Konfidenz und manuelle Bestätigung | Titelvorschläge werden aus Testbildern angezeigt und korrigierbar gespeichert |
 | 3 – Metadaten ✅ implementiert (Test ausstehend) | **v0.3.0** | TMDB/AniList-Suche, Titel-Aliase, Poster, Jahreszahlen, ID-Mapping | Erkannte Titel können zuverlässig mit Datensätzen verknüpft werden |
-| 4 – Mediensammlung | **v0.4.0** | Watchlist, individuelle Status, Filter, Suche, Bearbeiten, Duplikatschutz | Wiederholte Erkennung erzeugt keine doppelten Titel |
+| 4 – Mediensammlung ✅ implementiert (Test ausstehend) | **v0.4.0** | Watchlist, individuelle Status, Filter, Suche, Bearbeiten, Duplikatschutz | Wiederholte Erkennung erzeugt keine doppelten Titel |
 | 5 – Jellyfin | **v0.5.0** | Sichere API-Anbindung, Bibliotheksabgleich, Titel- und Staffel-/Episodenstatus | Vorhandene und teilweise vorhandene Titel werden nachvollziehbar markiert |
 | 6 – Instagram | **v0.6.0** | Link-Import unter Beachtung der Plattformbeschränkungen, unterstützte Mehrbildbeiträge, Upload-Fallback | Zugängliche Beiträge werden verarbeitet; nicht zugängliche sauber abgefangen |
 | 7 – Insights | **v0.7.0** | Dashboard, Quellenhistorie, Fundhäufigkeit, Prüf- und Fehlerübersicht | Statistiken und Herkunft pro Titel sind nachvollziehbar |
@@ -138,7 +138,7 @@ Zum Aktualisieren nach einem bestehenden Checkout: `git pull && docker compose u
 - [x] v0.1.1 – Manuelle Mediensuche und grundlegender Sehfortschritt (Integrationstest auf ZimaOS ausstehend)
 - [x] v0.2.0 – Bildanalyse implementiert (ZimaOS-Laufzeittest ausstehend)
 - [x] v0.3.0 – Metadaten und manuelle Titelzuordnung implementiert (ZimaOS-Laufzeittest ausstehend)
-- [ ] v0.4.0 – Sammlung
+- [x] v0.4.0 – Erweiterte Sammlung implementiert (ZimaOS-Test ausstehend)
 - [ ] v0.5.0 – Jellyfin
 - [ ] v0.6.0 – Instagram
 - [ ] v0.7.0 – Insights
