@@ -9,7 +9,6 @@ type Insight = {
  instagram:{sources:number;kinds:CountMap;unique_titles:number;total_mentions:number;most_mentioned:{id:number;title:string;kind:string;poster_url:string|null;mentions:number;watched_episodes:number}[];top_sources:{id:number;url:string;kind:string;titles:number}[]}
  notes:string[]
 }
-const kindNames:CountMap = {}
 const colors:Record<string,string>={movie:'#60b8f5',series:'#ac8afa',anime:'#50d1c7',wishlist:'#90b2ec',planned:'#8c8df5',processing:'#f6c071',owned:'#58cba9',ignored:'#8794af',unwatched:'#8395b7',completed:'#51cfa8',through_episode:'#f7c16b',season_completed:'#aa93ec',present:'#62d4a5',series_only:'#e9bc72',missing:'#ee91a1',ambiguous:'#b7a0ff'}
 function BarSet({values,names}: {values:CountMap;names:Record<string,string>}) {
  const total=Object.values(values).reduce((a,b)=>a+b,0)
