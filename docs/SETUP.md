@@ -252,10 +252,32 @@ Unter **ForgeCore** kannst du eine Vorschau und anschließend eine **JSON- oder 
 
 - Bei vorhandenem Jellyfin-Snapshot werden nur Titel mit Status `missing` exportiert. Mehrdeutige Treffer werden ausgeschlossen.
 - Ohne Snapshot werden Titel mit persönlichem Status `owned` oder `ignored` ausgeschlossen.
-- Diese Schnittstelle startet **keine Downloads**, sendet **keine externen API-Aufrufe** an ForgeCore und unterstellt keinen bislang unbestätigten ForgeCore-API-Vertrag.
+- Der Datei-Export startet **keine Downloads** und benötigt keine ForgeCore-API-Verbindung. Die zusätzlich verfügbare, optionale direkte Merkliste wird unten beschrieben.
 - Die JSON-Ausgabe enthält ein dokumentierbares `schema_version: 1`, den Erstellungszeitpunkt und Metadaten-IDs. Beide Formate müssen vor einer späteren Direktintegration gegen ForgeCore validiert werden.
 
 API: `GET /api/forgecore/preview` sowie `GET /api/forgecore/export?format=json|csv`.
+
+
+### Optionale direkte ForgeCore-Merkliste (ForgeCore v1.8.5)
+
+Die echte ForgeCore-Schnittstelle wurde in `Homiiboy/StreamForge/ForgeCore/server/src/server.mjs` und `discover-state.mjs` geprüft. Sie akzeptiert über `POST /api/discover/watchlist` die Felder `kind` (`movie` oder `tv`), `id` (TMDB-ID) und `monitored`. Cinearis sendet **immer `monitored: false`** und führt keine Download- oder Scanaktionen aus.
+
+In deiner **lokalen** `.env` bei Bedarf ergänzen:
+```dotenv
+FORGECORE_URL=http://DEINE-ZIMAOS-IP:8787
+FORGECORE_PASSWORD=DEIN_FORGECORE_ADMIN_PASSWORT
+```
+Beide Variablen werden **nur an das Cinearis-Backend** übergeben. ForgeCore muss aus dem Cinearis-Backend-Container erreichbar sein. Läuft ForgeCore mit der Standardeinstellung `FORGECORE_BIND_ADDRESS=127.0.0.1`, kann ein anderer Container nicht einfach über `host.docker.internal` zugreifen. Verwende ein gemeinsames internes Docker-Netzwerk, oder eine bewusst freigegebene, firewallgeschützte LAN-Adresse. Bei Verbindungen über ein nicht vertrauenswürdiges Netz HTTPS verwenden.
+
+Nach `docker compose up -d --build` in Cinearis zu **ForgeCore** wechseln. Für eindeutig fehlende Titel mit einer **TMDB-ID** erscheint die Schaltfläche **Merkliste**. Nach deiner Bestätigung meldet sich das Backend mit ForgeCore an, verwendet dessen Session-Cookie und CSRF-Token und schreibt nur diesen Titel in die nicht überwachte Merkliste.
+
+Die direkte Übergabe funktioniert **nicht** für reine AniList-IDs oder manuell erfasste Titel ohne TMDB-ID. ForgeCore benötigt außerdem einen funktionierenden TMDB-Token. Ein Eintrag in der Merkliste beweist **nicht**, dass eine Downloadquelle existiert oder ein Download erfolgreich sein kann.
+
+Neue Endpunkte:
+- `GET /api/forgecore/connection` – Verbindungs-Konfiguration ohne Geheimnisse
+- `POST /api/forgecore/watchlist/{cinearis_id}` – explizite, nicht überwachte Einzelübergabe
+
+Das Exportieren als CSV/JSON bleibt unabhängig von einer ForgeCore-Verbindung möglich.
 
 ### PWA
 
