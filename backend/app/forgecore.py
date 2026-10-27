@@ -5,6 +5,9 @@ Data reflects the latest Jellyfin scan, otherwise the manually owned state.
 import csv
 import io
 import json
+import os
+from urllib.parse import urlsplit
+import httpx
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
@@ -44,6 +47,60 @@ def build_forgecore_router(MediaItem, JellyfinEntry, JellyfinSync, engine, resol
                     "library_check": "jellyfin_missing" if latest else "manual_status_only",
                 })
             return result, latest
+
+
+    def forgecore_config():
+        endpoint = os.getenv("FORGECORE_URL", "").strip().rstrip("/")
+        password = os.getenv("FORGECORE_PASSWORD", "").strip()
+        if not endpoint or not password:
+            return None
+        url = urlsplit(endpoint)
+        if (url.scheme not in ("http", "https") or not url.hostname
+                or url.username or url.password or url.query or url.fragment):
+            raise HTTPException(status_code=503, detail="FORGECORE_URL ist ungültig")
+        # URL is a server administrator-controlled environment setting, not user input.
+        return endpoint, password
+
+    @router.get("/connection")
+    def connection():
+        return {"configured": forgecore_config() is not None,
+                "mode": "watchlist_only", "downloads_enabled": False}
+
+    @router.post("/watchlist/{media_id}")
+    async def send_to_watchlist(media_id: int):
+        """Opt-in transfer of one TMDB item into ForgeCore's non-monitored watchlist."""
+        config = forgecore_config()
+        if not config:
+            raise HTTPException(status_code=503, detail="FORGECORE_URL / FORGECORE_PASSWORD fehlen")
+        rows, _ = collect()
+        entry = next((row for row in rows if row["cinearis_id"] == media_id), None)
+        if entry is None:
+            raise HTTPException(status_code=409, detail="Titel ist nicht eindeutig als fehlend freigegeben")
+        if entry["provider"] != "tmdb" or not str(entry["provider_id"]).isdigit():
+            raise HTTPException(status_code=422, detail="Für ForgeCore wird eine gültige TMDB-ID benötigt")
+        kind = "movie" if entry["media_type"] == "movie" else "tv"
+        base, password = config
+        try:
+            async with httpx.AsyncClient(timeout=15, follow_redirects=False) as client:
+                login = await client.post(base + "/api/auth/login", headers={
+                    "X-ForgeCore-Request": "1",
+                }, json={"password": password})
+                login.raise_for_status()
+                csrf = login.json().get("csrf", "")
+                if not isinstance(csrf, str) or len(csrf) != 48:
+                    raise ValueError("Ungültige ForgeCore-Anmeldung")
+                response = await client.post(base + "/api/discover/watchlist", headers={
+                    "X-ForgeCore-CSRF": csrf,
+                    "X-ForgeCore-Request": "1",
+                }, json={"kind": kind, "id": int(entry["provider_id"]), "monitored": False})
+                response.raise_for_status()
+                result = response.json()
+        except (httpx.HTTPStatusError, httpx.RequestError, ValueError, KeyError, TypeError) as exc:
+            # Never put credentials, cookies or provider response bodies into user-visible errors.
+            raise HTTPException(status_code=502, detail="ForgeCore-Anmeldung oder Merkliste fehlgeschlagen") from exc
+        return {"sent": True, "cinearis_id": media_id, "kind": kind,
+                "tmdb_id": entry["provider_id"], "monitored": False,
+                "forgecore_title": (result.get("item") or {}).get("title", entry["title"])}
 
     @router.get("/preview")
     def preview():
