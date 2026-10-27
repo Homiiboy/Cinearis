@@ -114,4 +114,4 @@ def build_instagram_router(Base, MediaItem, engine):
             session.delete(record)
             session.commit()
 
-    return router, SourceMedia
+    return router, InstagramSource, SourceMedia
