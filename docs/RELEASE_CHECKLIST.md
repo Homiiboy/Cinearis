@@ -2,7 +2,7 @@
 
 **Status: Release Candidate, ungetestet auf ZimaOS.** Nicht als produktionsreif einstufen, bevor alle Prüfungen bestanden sind.
 
-- [ ] `docker compose config` erfolgreich
+- [x] `docker compose config` erfolgreich (GitHub CI mit Testkonfiguration)
 - [ ] `docker compose up -d --build` erfolgreich
 - [ ] nginx-Basic-Auth verweigert Zugriffe ohne Kennwort
 - [ ] HTTPS über Reverse-Proxy eingerichtet, bevor Zugriff außerhalb des lokalen Netzes erfolgt
@@ -20,8 +20,8 @@
 - [ ] `bash scripts/backup.sh` erstellt gültigen Dump
 - [ ] Restore-Übung mit separater Test-Datenbank
 - [ ] Datenpersistenz nach `docker compose down && docker compose up -d`
-- [ ] `python -m unittest discover -s tests -v` im Backend erfolgreich
-- [ ] `npm run build` im Frontend erfolgreich
+- [x] `python -m unittest discover -s tests -v` im Backend erfolgreich (GitHub CI)
+- [x] `npm run build` im Frontend erfolgreich (GitHub CI)
 - [ ] Mobile Layout, Login und Bild-Upload testen
 - [ ] API-Tokens in `.env`, keine Secrets im Git-Verlauf
 
