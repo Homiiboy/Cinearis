@@ -102,3 +102,24 @@ Tests (im Backend-Verzeichnis nach Installation der Python-Abhängigkeiten):
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+
+## Phase 4 – Erweiterte Sammlung (v0.4.0)
+
+- **Meine Sammlung**: Suche nach Titel, Originaltitel oder Alias, Filter nach Medientyp, Medienstatus und Sehstatus; sortiere nach Hinzufügedatum, Titel oder Erscheinungsjahr.
+- **Bearbeitung**: Öffne ein Medium und wähle `Erweiterte Bearbeitung / Staffeln & Folgen`. Passe Titel, Beschreibung, Erscheinungsjahr und Mediathekstatus an.
+- **Filme**: Schalter `Film gesehen`.
+- **Serien/Anime**: Dokumentiere einzelne Episoden und ganze Staffeln unabhängig. Staffel `0` ist für Specials vorgesehen. Trage bei der Staffel-Aktion die **tatsächliche Anzahl Episoden** ein; Cinearis schätzt sie noch nicht automatisch. Staffelbereiche werden nur im angegebenen Episodenumfang verändert.
+- **Dubletten**: Neue Einträge werden anhand normalisierter Titel/Originaltitel/Aliasse und exakter Anbieter-IDs überprüft; unklare Titel müssen weiterhin manuell beurteilt werden.
+
+Neue Endpunkte: `PATCH /api/media/{id}`, `GET /api/media/{id}/episodes`, `PUT /api/media/{id}/episodes`, `PUT /api/media/{id}/seasons`, `DELETE /api/media/{id}/episodes`.
+
+**Datenhaltung:** Eine neue Tabelle `episode_progress` speichert einzelne abgehakte Folgen. Alte Einträge werden nicht gelöscht. Die ältere Einstellung `bis Staffel/Folge gesehen` aus v0.1.1 wird **nicht automatisch** in einen detaillierten Episodenverlauf umgewandelt, da die tatsächlichen Staffelgrößen unbekannt sind. Einträge können nachträglich korrekt eingepflegt werden. Bis dahin zeigen ältere Übersichten ggf. noch den bisherigen groben Sehstatus an.
+
+**Achtung:** Die Sammlung wird aktuell im Frontend gefiltert und die API gibt höchstens 1000 Titel zurück. Pagination folgt bei größeren Sammlungen. Vor dem ersten Start und bei Updates immer eine Datenbanksicherung erstellen.
+
+Tests:
+```bash
+cd backend
+python -m unittest discover -s tests -v
+```
