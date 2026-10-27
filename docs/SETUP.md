@@ -164,3 +164,27 @@ docker compose logs --tail=100 backend
 ```
 
 Zum Aufruf des Scan-Endpunkts eignet sich der Button in der Weboberfläche. Bei Fehlern bleiben zuvor gespeicherte Snapshots bestehen.
+
+
+## Phase 6 – Instagram-Quellen & Bildimport (v0.6.0)
+
+Cinearis verwendet einen **robusten, nutzergesteuerten Import**, ohne Instagram-Zugangsdaten, automatisches Scraping oder das Umgehen von Plattformbeschränkungen.
+
+1. Gehe in **Entdecken → Instagram-Import**.
+2. Füge den **öffentlichen Instagram-Beitragslink** ein (`https://www.instagram.com/p/...`, `/reel/...` oder `/tv/...`). Auch Trackingparameter werden beim Speichern entfernt.
+3. Öffne den Beitrag über den Link und erstelle eigene Screenshots bzw. verwende Bilder, die du rechtmäßig vorliegen hast. **Ein eingefügter Link lädt keine Bilder automatisch herunter.**
+4. Wähle die gespeicherte Instagram-Quelle aus. Lade darunter bis zu acht Bilder **gleichzeitig** hoch; die vorhandene OCR-/Vision-Analyse verarbeitet sie wie in Phase 2.
+5. Korrigiere unsichere Vorschläge, ordne ihnen gegebenenfalls TMDB-/AniList-Metadaten zu und wähle sie gezielt aus. **Geprüfte Titel hinzufügen** speichert neue Titel und verknüpft sie mit dem Beitrag. Bereits vorhandene Titel werden, soweit eindeutig identifizierbar, ebenfalls zugeordnet.
+6. Bereits gespeicherte Instagram-Quellen erscheinen in der Liste. Quellen können gelöscht werden, ohne die dazugehörigen Medien zu entfernen.
+
+Neue API-Endpunkte:
+- `GET /api/instagram/sources` – letzte 200 gespeicherte Quellen
+- `POST /api/instagram/sources` mit `{"url":"https://www.instagram.com/p/SHORTCODE/"}` – URL validieren und speichern
+- `POST /api/instagram/sources/{id}/media` mit `{"media_id":123}` – bestehendes Medium als Fund verknüpfen
+- `DELETE /api/instagram/sources/{id}` – Quelle und ihre Verknüpfungen löschen, **nicht** die Medien
+
+Speicherverhalten: Links, Shortcodes und Medienverknüpfungen werden dauerhaft in PostgreSQL gespeichert, nicht aber die hochgeladenen Bilder. Mehrfach gespeicherte Beiträge und gleiche Zuordnungen werden dedupliziert. User-Uploads nutzen unverändert den bestehenden Endpoint `POST /api/analysis/images`.
+
+**Plattformgrenzen:** Meta oEmbed ist in erster Linie für die Darstellung von Beiträgen gedacht, nicht als Medien-Extraktions-API. Es ist keine universelle öffentliche Schnittstelle verfügbar, um beliebige Instagram-Posts/Carousels/Reels ohne passende Berechtigungen zu analysieren. Deshalb liefert diese Version **keinen automatischen Abruf** fremder Instagram-Mediendateien über einen bloßen Link. Geschützte/privat geteilte Posts können nicht automatisch verarbeitet werden. Video-/Reel-Frames müssen vorerst als Screenshots bereitgestellt werden.
+
+**Sicherheit:** Die URL wird gegen eine feste HTTPS-Instagram-Hostliste geprüft; das Backend lädt sie **nicht** herunter. Es werden weder Instagram-Cookies noch Zugangsdaten benötigt. Die Anwendung hat noch kein Benutzer-Login und darf nicht offen im Internet erreichbar sein.
