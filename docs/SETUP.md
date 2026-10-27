@@ -188,3 +188,40 @@ Speicherverhalten: Links, Shortcodes und Medienverknüpfungen werden dauerhaft i
 **Plattformgrenzen:** Meta oEmbed ist in erster Linie für die Darstellung von Beiträgen gedacht, nicht als Medien-Extraktions-API. Es ist keine universelle öffentliche Schnittstelle verfügbar, um beliebige Instagram-Posts/Carousels/Reels ohne passende Berechtigungen zu analysieren. Deshalb liefert diese Version **keinen automatischen Abruf** fremder Instagram-Mediendateien über einen bloßen Link. Geschützte/privat geteilte Posts können nicht automatisch verarbeitet werden. Video-/Reel-Frames müssen vorerst als Screenshots bereitgestellt werden.
 
 **Sicherheit:** Die URL wird gegen eine feste HTTPS-Instagram-Hostliste geprüft; das Backend lädt sie **nicht** herunter. Es werden weder Instagram-Cookies noch Zugangsdaten benötigt. Die Anwendung hat noch kein Benutzer-Login und darf nicht offen im Internet erreichbar sein.
+
+
+## Phase 7 – Insights-Dashboard (v0.7.0)
+
+Öffne die neue Navigation **Insights**. Die Seite ruft `GET /api/insights` auf und präsentiert ausschließlich Werte aus der Cinearis-Datenbank.
+
+Folgende Auswertungen stehen bereit:
+- Gesamtzahl der Filme, Serien und Animes.
+- Statusübersicht: Wunschliste, geplant, in Bearbeitung, vorhanden, ignoriert.
+- Gesehen, ungesehen und teilweise gesehen auf Basis des gespeicherten Titelstatus; zusätzlich Anzahl **einzeln markierter Episoden** aus der Episodenverwaltung.
+- Jellyfin-Vergleich: gefunden, Serieneintrag ohne erkannte Folgen, fehlend oder unklar. Diese Auswertung basiert auf dem **letzten erfolgreichen Jellyfin-Snapshot** und benötigt zuvor einen Scan unter `Meine Sammlung`.
+- Instagram: Anzahl gespeicherter Quellen, Anzahl eindeutiger verknüpfter Titel, **Fundstellen je Titel** und Beiträge mit den meisten zugeordneten Medien.
+- Monatliche Sammlungszugänge anhand des gespeicherten Erstellungsdatums.
+
+Die Schaltfläche **Aktualisieren** fragt die Statistik erneut ab. Ohne Einträge werden verständliche Leermeldungen statt Demo-Zahlen angezeigt.
+
+`GET /api/insights` liefert `collection`, `jellyfin`, `instagram`, `generated_at` und `notes`.
+
+### Interpretation der Kennzahlen
+
+- *Fundstellen* zählen eindeutige Verknüpfungen eines Cinearis-Titels zu Instagram-Quellen. Das sind **keine** Instagram-Likes, Aufrufe oder unabhängige Empfehlungen.
+- *In Jellyfin gefunden* basiert auf eindeutig zugeordneten lokalen Einträgen. Ein fehlender Treffer bedeutet nicht, dass das Medium definitiv nicht auf einer externen Festplatte vorhanden ist.
+- *Gesehene Titel* verwenden den bisherigen Medientitel-Status. Einzeln markierte Episoden werden separat gezählt und machen einen Titel nicht automatisch vollständig gesehen.
+- Die Seite liest die Datenbank bei jedem Aufruf. Sehr große Sammlungen können zusätzliche Optimierungen bzw. Aggregations-Caching benötigen.
+- Cinearis speichert keine künstlichen Beispielstatistiken.
+
+Prüfung nach Aktualisierung:
+```bash
+docker compose up -d --build
+curl http://localhost:8088/api/insights
+docker compose logs --tail=100 backend
+```
+
+Unit-Tests im Backend:
+```bash
+cd backend && python -m unittest discover -s tests -v
+```
