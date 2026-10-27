@@ -1,3 +1,4 @@
+import ImageAnalyzer from './ImageAnalyzer'
 import { useEffect, useState } from 'react'
 import { Check, Film, Heart, Loader2, Plus, Search, Trash2, Tv, X } from 'lucide-react'
 
@@ -86,7 +87,7 @@ export default function Library({ items, onRefresh, page }: Props) {
   return <div className="library-view">
     {notice && <div className="library-notice">{notice}</div>}
     {error && <div className="warning" role="alert">{error}</div>}
-    {page === 'Entdecken' ? <section className="panel library-panel">
+    {page === 'Entdecken' ? <><ImageAnalyzer onRefresh={onRefresh}/><section className="panel library-panel">
       <div className="panel-heading"><div><h3>Medien suchen und hinzufügen</h3><p>Suche nach Filmen, Serien und Anime – oder erfasse einen Titel direkt.</p></div><Search size={22}/></div>
       <div className="library-search">
         <label>Medientyp <select value={kind} onChange={e => { setKind(e.target.value as typeof kind); setSuggestions([]) }}>{categories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}</select></label>
@@ -102,7 +103,7 @@ export default function Library({ items, onRefresh, page }: Props) {
       </div>
       <div className="manual-add"><div><strong>Manuell hinzufügen</strong><p>Funktioniert auch ohne TMDB-API-Schlüssel und bei unbekannten Titeln.</p></div><button className="outline-btn" disabled={!term.trim()} onClick={() => void add({ title: term.trim(), kind })}><Plus size={16}/> „{term.trim() || 'Titel'}“ hinzufügen</button></div>
       <p className="library-muted">Anime werden über AniList gesucht. Film- und Seriensuche benötigt einen kostenlosen TMDB-API-Schlüssel in der Serverkonfiguration.</p>
-    </section> : <section className="panel library-panel">
+    </section></> : <section className="panel library-panel">
       <div className="panel-heading"><div><h3>{page === 'Wunschliste' ? 'Deine Wunschliste' : 'Deine Mediensammlung'}</h3><p>Sehfortschritt und Mediathekstatus unabhängig voneinander verwalten.</p></div><span className="panel-count">{filtered.length} Titel</span></div>
       <div className="library-tabs">{[{ value: 'all', label: 'Alle' }, ...categories].map(c => <button key={c.value} className={filter === c.value ? 'active' : ''} onClick={() => setFilter(c.value)}>{c.label}</button>)}</div>
       {filtered.length ? <div className="library-grid">{filtered.map(item => <button className="library-tile" key={item.id} onClick={() => edit(item)}>
