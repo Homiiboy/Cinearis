@@ -15,8 +15,9 @@ from app.analysis import router as analysis_router
 
 from app.metadata import router as metadata_router, provider_detail, provider_search
 from app.collection import build_collection_router, duplicate_for
+from app.jellyfin import build_router as build_jellyfin_router
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cinearis.db")
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
@@ -92,6 +93,7 @@ def as_dict(item: MediaItem):
 
 
 collection_router, EpisodeProgress = build_collection_router(Base, MediaItem, engine, as_dict)
+jellyfin_router, JellyfinEntry, JellyfinSync, resolve_jellyfin = build_jellyfin_router(Base, MediaItem, engine)
 
 
 def migrate_v011():
@@ -126,6 +128,7 @@ app = FastAPI(title="Cinearis API", version=VERSION, lifespan=lifespan)
 app.include_router(analysis_router)
 app.include_router(metadata_router)
 app.include_router(collection_router)
+app.include_router(jellyfin_router)
 
 
 @app.get("/api/live")
