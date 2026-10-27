@@ -1,0 +1,45 @@
+name: Cinearis CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install requirements
+        run: pip install -r backend/requirements.txt
+      - name: Run backend unit tests
+        working-directory: backend
+        run: python -m unittest discover -s tests -v
+      - name: Compile backend sources
+        run: python -m compileall -q backend/app backend/tests
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install npm dependencies
+        working-directory: frontend
+        run: npm install --no-audit --no-fund
+      - name: Typecheck and build
+        working-directory: frontend
+        run: npm run build
+
+  docker-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Docker Compose syntax
+        run: |
+          printf 'CI-dummy:%s\n' 'dummyhash' > config-nginx-htpasswd
+          POSTGRES_PASSWORD=ci_dummy docker compose config --quiet
