@@ -10,7 +10,9 @@ from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import DateTime, Integer, String, UniqueConstraint, create_engine, func, inspect, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-VERSION = "0.1.1"
+from app.analysis import router as analysis_router
+
+VERSION = "0.2.0"
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cinearis.db")
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
@@ -98,6 +100,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Cinearis API", version=VERSION, lifespan=lifespan)
+app.include_router(analysis_router)
 
 
 @app.get("/api/live")
