@@ -1,3 +1,4 @@
+import JellyfinPanel, { type Match } from './JellyfinPanel'
 import MediaEditor from './MediaEditor'
 import MetadataPicker, { type MetaMatch } from './MetadataPicker'
 import ImageAnalyzer from './ImageAnalyzer'
@@ -40,6 +41,8 @@ export default function Library({ items, onRefresh, page }: Props) {
   const [watchFilter,setWatchFilter] = useState('all')
   const [sortBy,setSortBy] = useState('latest')
   const [advanced,setAdvanced] = useState<Media|null>(null)
+  const [jellyfinMatches,setJellyfinMatches] = useState<Record<number,Match>>({})
+  const [jellyfinSynced,setJellyfinSynced] = useState(false)
   const [selected, setSelected] = useState<Media | null>(null)
   const [metadataFor, setMetadataFor] = useState<Media | null>(null)
   const [metadataBusy, setMetadataBusy] = useState(false)
@@ -121,7 +124,7 @@ export default function Library({ items, onRefresh, page }: Props) {
       </div>
       <div className="manual-add"><div><strong>Manuell hinzufügen</strong><p>Funktioniert auch ohne TMDB-API-Schlüssel und bei unbekannten Titeln.</p></div><button className="outline-btn" disabled={!term.trim()} onClick={() => void add({ title: term.trim(), kind })}><Plus size={16}/> „{term.trim() || 'Titel'}“ hinzufügen</button></div>
       <p className="library-muted">Anime werden über AniList gesucht. Film- und Seriensuche benötigt einen kostenlosen TMDB-API-Schlüssel in der Serverkonfiguration.</p>
-    </section></> : <section className="panel library-panel">
+    </section></> : <><JellyfinPanel onMatches={(items,synced)=>{setJellyfinMatches(items);setJellyfinSynced(synced)}}/><section className="panel library-panel">
       <div className="panel-heading"><div><h3>{page === 'Wunschliste' ? 'Deine Wunschliste' : 'Deine Mediensammlung'}</h3><p>Sehfortschritt und Mediathekstatus unabhängig voneinander verwalten.</p></div><span className="panel-count">{filtered.length} Titel</span></div>
       <div className="library-tabs">{[{ value: 'all', label: 'Alle' }, ...categories].map(c => <button key={c.value} className={filter === c.value ? 'active' : ''} onClick={() => setFilter(c.value)}>{c.label}</button>)}</div>
       <div className="advanced-filters"><label><Search size={16}/><input value={searchLocal} onChange={e=>setSearchLocal(e.target.value)} placeholder="Titel oder Alternativtitel suchen"/></label><select aria-label="Sammlungsstatus filtern" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">Alle Status</option>{Object.entries(statusLabels).map(([key,value])=><option key={key} value={key}>{value}</option>)}</select><select aria-label="Sehstatus filtern" value={watchFilter} onChange={e=>setWatchFilter(e.target.value)}><option value="all">Jeder Sehstatus</option><option value="watched">Komplett gesehen</option><option value="unwatched">Ungesehen</option><option value="partial">Teilweise gesehen</option></select><select aria-label="Sortierung" value={sortBy} onChange={e=>setSortBy(e.target.value)}><option value="latest">Neu hinzugefügt</option><option value="title">Titel A–Z</option><option value="year">Erscheinungsjahr</option></select></div>
@@ -129,9 +132,10 @@ export default function Library({ items, onRefresh, page }: Props) {
         {item.poster_url ? <img src={item.poster_url} alt="" loading="lazy" /> : <span className="tile-fallback">{item.kind === 'movie' ? <Film/> : <Tv/>}</span>}
         <span className="tile-content"><strong>{item.title}</strong><small>{item.release_year || categories.find(c => c.value === item.kind)?.label} · {statusLabels[item.status] || item.status}</small><span className="watch-tag">{progress(item)}</span></span>
       </button>)}</div> : <div className="library-empty"><Heart size={30}/><h3>Noch keine Titel vorhanden.</h3><p>Wechsle zu „Entdecken“, um deine ersten Filme, Serien oder Anime hinzuzufügen.</p></div>}
-    </section>}
+    </section></>}
     {selected && <div className="dialog-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setSelected(null) }}><section className="edit-dialog" role="dialog" aria-modal="true" aria-label="Sehfortschritt bearbeiten">
       <div className="dialog-head"><div><small>MEDIUM BEARBEITEN</small><h2>{selected.title}</h2></div><button aria-label="Schließen" onClick={() => setSelected(null)}><X size={20}/></button></div>
+      {jellyfinSynced && <div className="jelly-detail"><strong>Jellyfin-Abgleich</strong><p>{jellyfinMatches[selected.id]?.matched_title||jellyfinMatches[selected.id]?.reason||"Kein eindeutiger Treffer"}</p>{jellyfinMatches[selected.id]?.seasons&&<div>{Object.entries(jellyfinMatches[selected.id].seasons!).map(([season,episodes])=><span key={season}>Staffel {season}: {episodes.length} Folgen ({episodes.join(", ")})</span>)}</div>}</div>}
       <label>In meiner Mediathek <select value={status} onChange={e => setStatus(e.target.value)}>{Object.entries(statusLabels).map(([value,label]) => <option value={value} key={value}>{label}</option>)}</select></label>
       <label>Sehfortschritt <select value={watch} onChange={e => setWatch(e.target.value)}>
         <option value="unwatched">Nicht gesehen</option><option value="completed">{selected.kind === 'movie' ? 'Gesehen' : 'Komplett gesehen'}</option>
