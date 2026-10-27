@@ -21,6 +21,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cinearis}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-cinearis}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy
