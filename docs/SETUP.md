@@ -10,7 +10,7 @@
 git clone https://github.com/Homiiboy/Cinearis.git
 cd Cinearis
 cp .env.example .env
-sh scripts/setup-auth.sh
+bash scripts/setup-auth.sh
 # Wichtig: POSTGRES_PASSWORD in .env auf ein starkes Passwort ändern!
 docker compose up -d --build
 docker compose ps
@@ -20,9 +20,9 @@ docker compose ps
 
 ## Funktion prüfen
 ```bash
-curl http://localhost:8088/api/live
-curl http://localhost:8088/api/health
-curl http://localhost:8088/api/dashboard
+curl -u cinearis http://localhost:8088/api/live
+curl -u cinearis http://localhost:8088/api/health
+curl -u cinearis http://localhost:8088/api/dashboard
 docker compose logs --tail=100 backend
 ```
 Die Gesundheitsabfrage zeigt `database: connected`, sobald die Verbindung zur PostgreSQL-Datenbank funktioniert.
@@ -159,8 +159,8 @@ API:
 ```bash
 docker compose config
 docker compose up -d --build
-curl http://localhost:8088/api/jellyfin/status
-curl http://localhost:8088/api/health
+curl -u cinearis http://localhost:8088/api/jellyfin/status
+curl -u cinearis http://localhost:8088/api/health
 docker compose logs --tail=100 backend
 ```
 
@@ -218,7 +218,7 @@ Die Schaltfläche **Aktualisieren** fragt die Statistik erneut ab. Ohne Einträg
 Prüfung nach Aktualisierung:
 ```bash
 docker compose up -d --build
-curl http://localhost:8088/api/insights
+curl -u cinearis http://localhost:8088/api/insights
 docker compose logs --tail=100 backend
 ```
 
@@ -236,7 +236,7 @@ Die Anwendung besitzt nun **verpflichtenden HTTP-Basic-Auth-Zugangsschutz**. Leg
 ```bash
 git pull
 cp -n .env.example .env
-sh scripts/setup-auth.sh
+bash scripts/setup-auth.sh
 nano .env
 docker compose config
 docker compose up -d --build
