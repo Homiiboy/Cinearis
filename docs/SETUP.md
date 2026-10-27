@@ -80,3 +80,25 @@ API:
 - `POST /api/media` – bestätigten Titel speichern (bereits aus v0.1.1)
 
 **Grenzen:** Version 0.2.0 verifiziert erkannte Namen noch nicht automatisch mit TMDB/AniList; dafür ist Phase 3 vorgesehen. OCR-/KI-Konfidenz ist eine Heuristik, keine garantierte Treffergenauigkeit. Es gibt noch keine dauerhafte Importhistorie und keine Benutzeranmeldung. Der Dienst darf nicht ungeschützt öffentlich betrieben werden.
+
+
+## Phase 3 – Metadaten und Titelzuordnung (v0.3.0)
+
+Unter **Entdecken** liefert die Suche nun erweiterte Metadatenvorschläge. Für Filme und Serien wird **TMDB**, für Anime **AniList** verwendet. Angezeigt werden deutscher bzw. bevorzugter Titel, Originaltitel, alternative Schreibweisen (soweit beim Anbieter hinterlegt), Poster, Erscheinungsjahr, Anbieter und externe ID.
+
+Bei der Bilderkennung einen vorgeschlagenen Titel zunächst klassifizieren, dann **Metadaten suchen** wählen und den richtigen Treffer bestätigen. Erst danach **Geprüfte Titel hinzufügen** betätigen. Das verhindert, dass die Vision-KI einem ähnlich klingenden Titel automatisch eine falsche ID zuweist.
+
+Bereits vorhandene Filme/Serien/Anime: In **Meine Sammlung** den Titel anklicken und **Metadaten / Poster zuordnen** wählen. Die Verknüpfung aktualisiert Titel und Bild, lässt Sehfortschritt und Mediathekstatus aber unverändert.
+
+API:
+- `GET /api/metadata/search?kind=movie&q=...` – sortierte Suchvorschläge mit Alternativtiteln und Ähnlichkeitswert
+- `GET /api/metadata/detail?provider=tmdb&provider_id=...&kind=movie` – vollständigerer Anbieterdatensatz
+- `PATCH /api/media/{id}/metadata` mit `{"provider":"tmdb","provider_id":"123"}` – vom Benutzer bestätigte Zuordnung
+- `GET /api/media` – enthält nun `original_title`, `aliases`, `description`, `poster_url` und externe ID
+
+**Wichtig:** Der Ähnlichkeitswert ist ein Textvergleich, kein Nachweis für einen passenden Film. Fremdsprachige Titel sind nur so vollständig wie die Daten des Anbieters. Die Datenbank verknüpft derzeit **eine primäre Anbieter-ID pro Medienobjekt**; automatische Cross-Provider-Zuordnung und Staffel-/Episoden-Metadaten folgen später. Vor Updates bitte das PostgreSQL-Volume sichern.
+
+Tests (im Backend-Verzeichnis nach Installation der Python-Abhängigkeiten):
+```bash
+python -m unittest discover -s tests -v
+```
