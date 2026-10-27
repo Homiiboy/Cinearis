@@ -18,8 +18,9 @@ from app.collection import build_collection_router, duplicate_for
 from app.jellyfin import build_router as build_jellyfin_router
 from app.instagram import build_instagram_router
 from app.insights import build_insights_router
+from app.forgecore import build_forgecore_router
 
-VERSION = "0.7.0"
+VERSION = "1.0.0"
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cinearis.db")
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
@@ -98,6 +99,7 @@ collection_router, EpisodeProgress = build_collection_router(Base, MediaItem, en
 jellyfin_router, JellyfinEntry, JellyfinSync, resolve_jellyfin = build_jellyfin_router(Base, MediaItem, engine)
 instagram_router, InstagramSource, SourceMedia = build_instagram_router(Base, MediaItem, engine)
 insights_router = build_insights_router(MediaItem, EpisodeProgress, InstagramSource, SourceMedia, JellyfinEntry, JellyfinSync, engine, resolve_jellyfin)
+forgecore_router = build_forgecore_router(MediaItem, JellyfinEntry, JellyfinSync, engine, resolve_jellyfin)
 
 
 def migrate_v011():
@@ -135,6 +137,7 @@ app.include_router(collection_router)
 app.include_router(jellyfin_router)
 app.include_router(instagram_router)
 app.include_router(insights_router)
+app.include_router(forgecore_router)
 
 
 @app.get("/api/live")
