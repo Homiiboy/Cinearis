@@ -112,12 +112,12 @@ Bei einem späteren Build werden die Dateien im statischen öffentlichen Verzeic
 git clone https://github.com/Homiiboy/Cinearis.git
 cd Cinearis
 cp .env.example .env
-sh scripts/setup-auth.sh
+bash scripts/setup-auth.sh
 # In .env ein starkes POSTGRES_PASSWORD setzen
 docker compose up -d --build
 ```
 
-Standardmäßig nur auf `127.0.0.1:8088` erreichbar. Für den Zugriff im **vertrauenswürdigen LAN** `CINEARIS_BIND_IP=0.0.0.0` in `.env` setzen und dann `http://<SERVER-IP>:8088` öffnen (mit Basic-Auth-Anmeldung). Für Fernzugriff HTTPS/VPN nutzen. Für den API-/Datenbankcheck `http://<SERVER-IP>:8088/api/health` aufrufen.
+Standardmäßig nur auf `127.0.0.1:8088` erreichbar. Für den Zugriff im **vertrauenswürdigen LAN** `CINEARIS_BIND_IP=0.0.0.0` in `.env` setzen und dann `http://<SERVER-IP>:8088` öffnen (mit Basic-Auth-Anmeldung). Für Fernzugriff HTTPS/VPN nutzen. Für den API-/Datenbankcheck nach Anmeldung `http://<SERVER-IP>:8088/api/health` aufrufen.
 
 Zum Aktualisieren nach einem bestehenden Checkout: `git pull && docker compose up -d --build`. Für die TMDB-Suche `TMDB_API_KEY` und für eine zusätzliche Vision-KI optional `VISION_API_KEY` in `.env` ergänzen. **Ausführliche Anleitung:** [docs/SETUP.md](docs/SETUP.md). **Sicherheit:** v1.0.0 RC bietet verpflichtende Einzelbenutzer-HTTP-Basic-Auth, aber noch keine Mehrbenutzerverwaltung. Nicht ungeschützt ins Internet stellen; für Fernzugriff HTTPS/VPN voraussetzen.
 
