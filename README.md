@@ -8,11 +8,11 @@
 
 Cinearis ist Teil des **Novarion-Ökosystems**. Die selbst gehostete Webanwendung erkennt Titel aus Bildern und – soweit technisch und rechtlich zugänglich – Social-Media-Beiträgen, erstellt eine dauerhaft wachsende persönliche Merkliste und gleicht diese mit **Jellyfin / Velaris** ab. Eine spätere Verbindung zu **ForgeCore** ist geplant.
 
-> **Projektstatus:** **v0.1.1 – Manuelle Suche und Sehfortschritt implementiert** · Docker-Betrieb auf ZimaOS noch nicht praktisch verifiziert · Bildanalyse, Instagram, Jellyfin und ForgeCore folgen in späteren Phasen.
+> **Projektstatus:** **v0.2.0 – Bilderkennung mit OCR und optionaler Vision-KI implementiert** · Docker-Betrieb auf ZimaOS noch nicht praktisch verifiziert · Instagram, Jellyfin und ForgeCore folgen in späteren Phasen.
 
-## ✅ Bereits umgesetzt (v0.1.1)
+## ✅ Bereits umgesetzt (bis v0.2.0)
 
-- **Manuell suchen:** Filme und Serien über TMDB (eigener API-Schlüssel), Anime über AniList, plus direkte Titel-Erfassung ohne API.
+- **Bild-Upload und Analyse (v0.2.0):** Mehrere Screenshots/Poster gleichzeitig hochladen, lokale OCR mit Tesseract (Deutsch/Englisch), optional externe Vision-KI, Konfidenz, bearbeitbare Kandidaten und bewusste Übernahme in die persönliche Liste.\n- **Manuell suchen:** Filme und Serien über TMDB (eigener API-Schlüssel), Anime über AniList, plus direkte Titel-Erfassung ohne API.
 - **Titel hinzufügen:** Sammlung mit Dublettenprüfung für Anbieter-IDs und manuell erfasste Namen.
 - **Sehfortschritt:** Filme *gesehen/nicht gesehen*; Serien und Anime *nicht gesehen*, *komplett gesehen*, *bis Staffel/Folge* oder *Staffel gesehen*.
 - **Getrennte Statuswerte:** Ein Titel kann bereits in der Mediathek liegen und dennoch ungesehen sein.
@@ -40,7 +40,7 @@ Alle Phasen sind **geplant**. Versionen bezeichnen Entwicklungsziele, keine bere
 | Phase | Zielversion | Umfang | Abnahmekriterium |
 | --- | --- | --- | --- |
 | 1 – Fundament ✅ implementiert | **v0.1.0** | React/TypeScript-Frontend, FastAPI-Backend, PostgreSQL, Docker Compose, Basis-UI, Konfiguration | Anwendung startet lokal und unter ZimaOS, Healthcheck erfolgreich |
-| 2 – Bildanalyse | **v0.2.0** | Einzel-/Mehrfach-Upload, OCR, austauschbarer Vision-KI-Anbieter, Konfidenz und manuelle Bestätigung | Titelvorschläge werden aus Testbildern angezeigt und korrigierbar gespeichert |
+| 2 – Bildanalyse ✅ implementiert (Test ausstehend) | **v0.2.0** | Einzel-/Mehrfach-Upload, OCR, austauschbarer Vision-KI-Anbieter, Konfidenz und manuelle Bestätigung | Titelvorschläge werden aus Testbildern angezeigt und korrigierbar gespeichert |
 | 3 – Metadaten | **v0.3.0** | TMDB/AniList-Suche, Titel-Aliase, Poster, Jahreszahlen, ID-Mapping | Erkannte Titel können zuverlässig mit Datensätzen verknüpft werden |
 | 4 – Mediensammlung | **v0.4.0** | Watchlist, individuelle Status, Filter, Suche, Bearbeiten, Duplikatschutz | Wiederholte Erkennung erzeugt keine doppelten Titel |
 | 5 – Jellyfin | **v0.5.0** | Sichere API-Anbindung, Bibliotheksabgleich, Titel- und Staffel-/Episodenstatus | Vorhandene und teilweise vorhandene Titel werden nachvollziehbar markiert |
@@ -113,7 +113,7 @@ docker compose up -d --build
 
 Danach `http://<SERVER-IP>:8088` öffnen. Für den API-/Datenbankcheck `http://<SERVER-IP>:8088/api/health` aufrufen.
 
-Zum Aktualisieren nach einem bestehenden Checkout: `git pull && docker compose up -d --build`. Für die TMDB-Suche `TMDB_API_KEY` in `.env` ergänzen. **Ausführliche Anleitung:** [docs/SETUP.md](docs/SETUP.md). **Achtung:** Phase 1 hat noch keine Benutzeranmeldung – nur im privaten Heimnetz betreiben, nicht ungeschützt ins Internet stellen.
+Zum Aktualisieren nach einem bestehenden Checkout: `git pull && docker compose up -d --build`. Für die TMDB-Suche `TMDB_API_KEY` und für eine zusätzliche Vision-KI optional `VISION_API_KEY` in `.env` ergänzen. **Ausführliche Anleitung:** [docs/SETUP.md](docs/SETUP.md). **Achtung:** Phase 1 hat noch keine Benutzeranmeldung – nur im privaten Heimnetz betreiben, nicht ungeschützt ins Internet stellen.
 
 ## 🔐 Datenschutz & Sicherheit
 
@@ -136,7 +136,7 @@ Zum Aktualisieren nach einem bestehenden Checkout: `git pull && docker compose u
 - [x] Favicon.ico im Repository
 - [x] v0.1.0 – Projektfundament implementiert (ZimaOS-Laufzeittest ausstehend)
 - [x] v0.1.1 – Manuelle Mediensuche und grundlegender Sehfortschritt (Integrationstest auf ZimaOS ausstehend)
-- [ ] v0.2.0 – Bildanalyse
+- [x] v0.2.0 – Bildanalyse implementiert (ZimaOS-Laufzeittest ausstehend)
 - [ ] v0.3.0 – Metadaten
 - [ ] v0.4.0 – Sammlung
 - [ ] v0.5.0 – Jellyfin
