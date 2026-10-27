@@ -24,7 +24,7 @@ class JellyfinMatchingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.engine = create_engine("sqlite:///:memory:")
-        _, cls.Entry, _, cls.resolve = build_router(Base, Media, cls.engine)
+        _, cls.Entry, _, cls.resolve = staticmethod(build_router(Base, Media, cls.engine)[3])
         Base.metadata.create_all(cls.engine)
 
     def entry(self, **kwargs):
