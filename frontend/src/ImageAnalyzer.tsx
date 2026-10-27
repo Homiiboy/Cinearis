@@ -1,3 +1,4 @@
+import InstagramSources from './InstagramSources'
 import MetadataPicker, { type MetaMatch } from './MetadataPicker'
 import { useEffect, useRef, useState } from 'react'
 import { Check, ImagePlus, Loader2, Plus, ShieldAlert, Sparkles, Trash2 } from 'lucide-react'
@@ -16,6 +17,7 @@ async function errorMessage(response: Response) {
 export default function ImageAnalyzer({ onRefresh }: Props) {
   const input = useRef<HTMLInputElement>(null)
   const [files,setFiles] = useState<File[]>([])
+  const [sourceId,setSourceId] = useState<number|null>(null)
   const [matching,setMatching] = useState<number|null>(null)
   const [results,setResults] = useState<Candidate[]>([])
   const [ocrText,setOcrText] = useState('')
@@ -58,23 +60,44 @@ export default function ImageAnalyzer({ onRefresh }: Props) {
     if(!chosen.length){setError('Bitte mindestens einen geprüften Treffer auswählen.');return}
     if(chosen.some(c => !c.title.trim() || c.kind==='unknown')){setError('Bitte für alle ausgewählten Titel einen Namen und Medientyp festlegen.');return}
     setSaving(true);setError('')
-    let saved=0,duplicates=0,failed=0
+    let saved=0,duplicates=0,failed=0,linked=0
     for(const c of chosen){
       try {
         const response=await fetch('/api/media',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...(c.match??{title:c.title.trim(),kind:c.kind}),status:'wishlist'})})
-        if(response.status===409){duplicates++;continue}
-        if(!response.ok){failed++;continue}
-        saved++
+        let id:number|null=null
+        if(response.status===409){
+          duplicates++
+          // A duplicate may be linked to this Instagram source as well.
+          if(sourceId!==null){
+            const listResponse=await fetch('/api/media')
+            if(listResponse.ok){
+              const list: {id:number;title:string;kind:string;provider?:string;provider_id?:string}[]=await listResponse.json()
+              const existing=list.find(x=>c.match?.provider_id
+                ? x.kind===c.kind && x.provider===c.match.provider && x.provider_id===c.match.provider_id
+                : x.kind===c.kind && x.title.trim().toLocaleLowerCase('de')===c.title.trim().toLocaleLowerCase('de'))
+              if(existing)id=existing.id
+            }
+          }
+        }else if(response.ok){
+          const created=await response.json()
+          id=created.id;saved++
+        }else{failed++;continue}
+        if(sourceId!==null && id!==null){
+          const linkedResponse=await fetch(`/api/instagram/sources/${sourceId}/media`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({media_id:id})})
+          if(linkedResponse.ok)linked++
+          else failed++
+        }
       }catch{failed++}
     }
     await onRefresh()
     setResults(prev=>prev.map(c=> chosen.includes(c) && failed===0 ? {...c,selected:false}:c))
-    setInfo(`${saved} hinzugefügt · ${duplicates} bereits vorhanden · ${failed} fehlgeschlagen`)
+    setInfo(`${saved} hinzugefügt · ${duplicates} bereits vorhanden · ${linked} mit Instagram verknüpft · ${failed} fehlgeschlagen`)
     if(failed) setError('Nicht alle Titel konnten gespeichert werden. Bitte überprüfe die Sammlung.')
     setSaving(false)
   }
-  return <section className="panel analyzer-panel">
+  return <><InstagramSources selectedId={sourceId} onSelect={setSourceId}/><section className="panel analyzer-panel">
     <div className="panel-heading"><div><h3><Sparkles size={18} style={{verticalAlign:'middle',marginRight:8,color:'#78d4ff'}}/> Bilderkennung</h3><p>Poster, Screenshots oder Collagen hochladen und gefundene Titel prüfen.</p></div><span className="panel-count">{vision?'Vision + OCR':'Lokale OCR'}</span></div>
+    {sourceId!==null&&<p className="ig-attached">Instagram-Quelle #{sourceId} ausgewählt: bestätigte Treffer werden damit verknüpft.</p>}
     <div className="upload-zone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();addFiles(e.dataTransfer.files)}}>
       <input type="file" ref={input} accept="image/png,image/jpeg,image/webp" multiple hidden onChange={e=>addFiles(e.target.files)}/>
       <ImagePlus size={32}/>
@@ -106,5 +129,5 @@ export default function ImageAnalyzer({ onRefresh }: Props) {
     </div>}
     {matching!==null && results[matching] && results[matching].kind!=='unknown' && <MetadataPicker title={results[matching].title} kind={results[matching].kind as Kind} onClose={()=>setMatching(null)} onSelect={match=>{change(matching,{title:match.title,kind:match.kind,match,selected:true});setMatching(null)}}/>}
     {ocrText&&<details className="ocr-details"><summary>Erkannten Bildtext anzeigen</summary><pre>{ocrText}</pre></details>}
-  </section>
+  </section></>
 }
