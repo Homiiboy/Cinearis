@@ -1,3 +1,4 @@
+import MediaEditor from './MediaEditor'
 import MetadataPicker, { type MetaMatch } from './MetadataPicker'
 import ImageAnalyzer from './ImageAnalyzer'
 import { useEffect, useState } from 'react'
@@ -6,7 +7,7 @@ import { Check, Film, Heart, Loader2, Plus, Search, Trash2, Tv, X } from 'lucide
 export type Media = {
   id: number; title: string; kind: 'movie' | 'series' | 'anime'; status: string
   watch_state: string; season_number: number | null; episode_number: number | null
-  poster_url: string | null; release_year: number | null
+  poster_url: string | null; release_year: number | null; description?: string | null; original_title?: string | null; aliases?: string[]
 }
 type Suggestion = Partial<MetaMatch> & { title: string; kind: 'movie' | 'series' | 'anime' }
 type Props = { items: Media[]; onRefresh: () => Promise<void>; page: string }
@@ -34,6 +35,11 @@ export default function Library({ items, onRefresh, page }: Props) {
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('all')
+  const [searchLocal,setSearchLocal] = useState('')
+  const [statusFilter,setStatusFilter] = useState('all')
+  const [watchFilter,setWatchFilter] = useState('all')
+  const [sortBy,setSortBy] = useState('latest')
+  const [advanced,setAdvanced] = useState<Media|null>(null)
   const [selected, setSelected] = useState<Media | null>(null)
   const [metadataFor, setMetadataFor] = useState<Media | null>(null)
   const [metadataBusy, setMetadataBusy] = useState(false)
@@ -94,7 +100,7 @@ export default function Library({ items, onRefresh, page }: Props) {
     try { await api(`/api/media/${selected.id}`, { method: 'DELETE' }); await onRefresh(); setSelected(null); setNotice('Titel entfernt.') }
     catch (e) { setError(e instanceof Error ? e.message : 'Entfernen fehlgeschlagen') }
   }
-  const filtered = items.filter(item => (page !== 'Wunschliste' || item.status === 'wishlist') && (filter === 'all' || item.kind === filter))
+  const filtered = items.filter(item => (page !== 'Wunschliste' || item.status === 'wishlist') && (filter === 'all' || item.kind === filter) && (statusFilter==='all'||item.status===statusFilter) && (watchFilter==='all'||(watchFilter==='watched'?item.watch_state==='completed':watchFilter==='unwatched'?item.watch_state==='unwatched':item.watch_state!=='unwatched'&&item.watch_state!=='completed')) && [item.title,item.original_title||'',...(item.aliases||[])].some(name=>name.toLocaleLowerCase('de').includes(searchLocal.toLocaleLowerCase('de')))).sort((a,b)=>sortBy==='title'?a.title.localeCompare(b.title,'de'):sortBy==='year'?(b.release_year||0)-(a.release_year||0):b.id-a.id)
   const progress = (item: Media) => item.watch_state === 'through_episode' ? `S${item.season_number} · bis Folge ${item.episode_number}` : item.watch_state === 'season_completed' ? `Staffel ${item.season_number} gesehen` : watchLabels[item.watch_state] || 'Nicht gesehen'
   return <div className="library-view">
     {notice && <div className="library-notice">{notice}</div>}
@@ -118,6 +124,7 @@ export default function Library({ items, onRefresh, page }: Props) {
     </section></> : <section className="panel library-panel">
       <div className="panel-heading"><div><h3>{page === 'Wunschliste' ? 'Deine Wunschliste' : 'Deine Mediensammlung'}</h3><p>Sehfortschritt und Mediathekstatus unabhängig voneinander verwalten.</p></div><span className="panel-count">{filtered.length} Titel</span></div>
       <div className="library-tabs">{[{ value: 'all', label: 'Alle' }, ...categories].map(c => <button key={c.value} className={filter === c.value ? 'active' : ''} onClick={() => setFilter(c.value)}>{c.label}</button>)}</div>
+      <div className="advanced-filters"><label><Search size={16}/><input value={searchLocal} onChange={e=>setSearchLocal(e.target.value)} placeholder="Titel oder Alternativtitel suchen"/></label><select aria-label="Sammlungsstatus filtern" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">Alle Status</option>{Object.entries(statusLabels).map(([key,value])=><option key={key} value={key}>{value}</option>)}</select><select aria-label="Sehstatus filtern" value={watchFilter} onChange={e=>setWatchFilter(e.target.value)}><option value="all">Jeder Sehstatus</option><option value="watched">Komplett gesehen</option><option value="unwatched">Ungesehen</option><option value="partial">Teilweise gesehen</option></select><select aria-label="Sortierung" value={sortBy} onChange={e=>setSortBy(e.target.value)}><option value="latest">Neu hinzugefügt</option><option value="title">Titel A–Z</option><option value="year">Erscheinungsjahr</option></select></div>
       {filtered.length ? <div className="library-grid">{filtered.map(item => <button className="library-tile" key={item.id} onClick={() => edit(item)}>
         {item.poster_url ? <img src={item.poster_url} alt="" loading="lazy" /> : <span className="tile-fallback">{item.kind === 'movie' ? <Film/> : <Tv/>}</span>}
         <span className="tile-content"><strong>{item.title}</strong><small>{item.release_year || categories.find(c => c.value === item.kind)?.label} · {statusLabels[item.status] || item.status}</small><span className="watch-tag">{progress(item)}</span></span>
@@ -135,9 +142,11 @@ export default function Library({ items, onRefresh, page }: Props) {
         {watch === 'through_episode' && <label>Folge <input type="number" min="1" max="99999" value={episode} onChange={e => setEpisode(e.target.value)}/></label>}
       </div>}
       {error && <p className="dialog-error">{error}</p>}
+      <button className="outline-btn" onClick={() => {setAdvanced(selected);setSelected(null)}}><Check size={16}/> Erweiterte Bearbeitung / Staffeln & Folgen</button>
       <button className="outline-btn" disabled={metadataBusy} onClick={() => setMetadataFor(selected)}><Search size={16}/> Metadaten / Poster zuordnen</button>
       <div className="dialog-actions"><button className="delete-btn" onClick={() => void remove()}><Trash2 size={16}/> Entfernen</button><button className="primary-btn" onClick={() => void save()}><Check size={17}/> Speichern</button></div>
     </section></div>}
+    {advanced&&<MediaEditor item={advanced} onClose={()=>setAdvanced(null)} onRefresh={onRefresh}/>}
     {metadataFor&&<MetadataPicker kind={metadataFor.kind} title={metadataFor.title} onClose={()=>setMetadataFor(null)} onSelect={match=>void link(match)}/>}
   </div>
 }
