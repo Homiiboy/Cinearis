@@ -1,3 +1,4 @@
+import MetadataPicker, { type MetaMatch } from './MetadataPicker'
 import ImageAnalyzer from './ImageAnalyzer'
 import { useEffect, useState } from 'react'
 import { Check, Film, Heart, Loader2, Plus, Search, Trash2, Tv, X } from 'lucide-react'
@@ -7,7 +8,7 @@ export type Media = {
   watch_state: string; season_number: number | null; episode_number: number | null
   poster_url: string | null; release_year: number | null
 }
-type Suggestion = { title: string; kind: 'movie' | 'series' | 'anime'; provider?: 'tmdb' | 'anilist'; provider_id?: string; poster_url?: string | null; release_year?: number | null }
+type Suggestion = Partial<MetaMatch> & { title: string; kind: 'movie' | 'series' | 'anime' }
 type Props = { items: Media[]; onRefresh: () => Promise<void>; page: string }
 const categories = [{ value: 'movie', label: 'Film' }, { value: 'series', label: 'Serie' }, { value: 'anime', label: 'Anime' }]
 const statusLabels: Record<string, string> = { wishlist: 'Wunschliste', planned: 'Geplant', processing: 'In Bearbeitung', owned: 'Vorhanden', ignored: 'Ignoriert' }
@@ -34,6 +35,8 @@ export default function Library({ items, onRefresh, page }: Props) {
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('all')
   const [selected, setSelected] = useState<Media | null>(null)
+  const [metadataFor, setMetadataFor] = useState<Media | null>(null)
+  const [metadataBusy, setMetadataBusy] = useState(false)
   const [watch, setWatch] = useState('unwatched')
   const [season, setSeason] = useState('1')
   const [episode, setEpisode] = useState('1')
@@ -47,7 +50,7 @@ export default function Library({ items, onRefresh, page }: Props) {
     const timer = setTimeout(async () => {
       setBusy(true); setError('')
       try {
-        const result = await api(`/api/search?kind=${kind}&q=${encodeURIComponent(q)}`, { signal: controller.signal })
+        const result = await api(`/api/metadata/search?kind=${kind}&q=${encodeURIComponent(q)}`, { signal: controller.signal })
         if (!controller.signal.aborted) setSuggestions(result)
       } catch (e) {
         if (!controller.signal.aborted) { setSuggestions([]); setError(e instanceof Error ? e.message : 'Suche fehlgeschlagen') }
@@ -77,6 +80,15 @@ export default function Library({ items, onRefresh, page }: Props) {
       await onRefresh(); setSelected(null); setNotice('Fortschritt gespeichert.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen') }
   }
+  const link = async (match: MetaMatch) => {
+    if (!metadataFor) return
+    setMetadataBusy(true); setError('')
+    try {
+      await api(`/api/media/${metadataFor.id}/metadata`,json('PATCH',{ provider:match.provider, provider_id:match.provider_id }))
+      await onRefresh(); setSelected(null); setMetadataFor(null); setNotice('Metadaten und Poster übernommen. Der Sehfortschritt bleibt erhalten.')
+    } catch(e) { setError(e instanceof Error ? e.message : 'Metadaten konnten nicht zugeordnet werden') }
+    finally { setMetadataBusy(false) }
+  }
   const remove = async () => {
     if (!selected || !window.confirm(`„${selected.title}“ wirklich aus der Sammlung entfernen?`)) return
     try { await api(`/api/media/${selected.id}`, { method: 'DELETE' }); await onRefresh(); setSelected(null); setNotice('Titel entfernt.') }
@@ -96,7 +108,7 @@ export default function Library({ items, onRefresh, page }: Props) {
       <div className="results">
         {suggestions.map(s => <article className="result-card" key={s.provider + '-' + s.provider_id}>
           {s.poster_url ? <img src={s.poster_url} alt="" loading="lazy"/> : <div className="poster-placeholder"><Film/></div>}
-          <div className="result-details"><strong>{s.title}</strong><small>{s.release_year ?? 'Jahr unbekannt'} · {categories.find(c => c.value === s.kind)?.label} · {s.provider === 'anilist' ? 'AniList' : 'TMDB'}</small></div>
+          <div className="result-details"><strong>{s.title}</strong><small>{s.release_year ?? 'Jahr unbekannt'} · {categories.find(c => c.value === s.kind)?.label} · {s.provider === 'anilist' ? 'AniList' : 'TMDB'} · {s.original_title && s.original_title!==s.title ? s.original_title : 'Offizieller Treffer'}</small></div>
           <button className="primary-btn" onClick={() => void add(s)}><Plus size={16}/> Hinzufügen</button>
         </article>)}
         {term.trim().length > 1 && !busy && suggestions.length === 0 && !error && <p className="library-muted">Keine Treffer gefunden. Du kannst den Titel manuell hinzufügen.</p>}
@@ -123,7 +135,9 @@ export default function Library({ items, onRefresh, page }: Props) {
         {watch === 'through_episode' && <label>Folge <input type="number" min="1" max="99999" value={episode} onChange={e => setEpisode(e.target.value)}/></label>}
       </div>}
       {error && <p className="dialog-error">{error}</p>}
+      <button className="outline-btn" disabled={metadataBusy} onClick={() => setMetadataFor(selected)}><Search size={16}/> Metadaten / Poster zuordnen</button>
       <div className="dialog-actions"><button className="delete-btn" onClick={() => void remove()}><Trash2 size={16}/> Entfernen</button><button className="primary-btn" onClick={() => void save()}><Check size={17}/> Speichern</button></div>
     </section></div>}
+    {metadataFor&&<MetadataPicker kind={metadataFor.kind} title={metadataFor.title} onClose={()=>setMetadataFor(null)} onSelect={match=>void link(match)}/>}
   </div>
 }
