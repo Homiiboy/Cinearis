@@ -14,7 +14,8 @@
 - [ ] Jellyfin-Scan, Staffel-/Episodenabgleich, keine Veränderung in Jellyfin
 - [ ] Instagram-Screenshot-Import und Quellenhistorie
 - [ ] Insights ohne Test-/Dummy-Werte
-- [ ] ForgeCore-Export JSON/CSV im Browser herunterladen und im realen ForgeCore prüfen
+- [ ] ForgeCore-Export JSON/CSV im Browser herunterladen und prüfen
+- [ ] Optionale direkte ForgeCore-1.8.5-Merkliste mit TMDB-Testtitel prüfen (monitored=false, kein Download)
 - [ ] PWA-Installation im Browser; HTTPS bzw. localhost nötig für Service Worker
 - [ ] `bash scripts/backup.sh` erstellt gültigen Dump
 - [ ] Restore-Übung mit separater Test-Datenbank
@@ -24,4 +25,4 @@
 - [ ] Mobile Layout, Login und Bild-Upload testen
 - [ ] API-Tokens in `.env`, keine Secrets im Git-Verlauf
 
-**Bekannte Grenzen:** Kein bestätigter direkter ForgeCore-API-Vertrag; Export erfordert manuelle Weiterverarbeitung. Instagram-Links werden nicht gescrapt. Keine Mehrbenutzerverwaltung. Der lokale Jellyfin-Snapshot ist möglicherweise veraltet. Automatisierte Datenbankmigrationen werden noch durch einfache Schema-Erweiterungen abgedeckt. PWA speichert nur die App-Shell, keine Mediendaten offline.
+**Bekannte Grenzen:** Direkter ForgeCore-Watchlist-Vertrag aus v1.8.5 wurde im Repository geprüft, aber die reale Verbindung mit deinem Server ist noch nicht verifiziert; CSV/JSON bleiben als Fallback. Instagram-Links werden nicht gescrapt. Keine Mehrbenutzerverwaltung. Der lokale Jellyfin-Snapshot ist möglicherweise veraltet. Automatisierte Datenbankmigrationen werden noch durch einfache Schema-Erweiterungen abgedeckt. PWA speichert nur die App-Shell, keine Mediendaten offline.
