@@ -14,8 +14,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 from app.analysis import router as analysis_router
 
 from app.metadata import router as metadata_router, provider_detail, provider_search
+from app.collection import build_collection_router, duplicate_for
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cinearis.db")
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
@@ -90,6 +91,9 @@ def as_dict(item: MediaItem):
     }
 
 
+collection_router, EpisodeProgress = build_collection_router(Base, MediaItem, engine, as_dict)
+
+
 def migrate_v011():
     """Add nullable/defaulted columns to existing v0.1.0 installations, without deleting data."""
     columns = {col["name"] for col in inspect(engine).get_columns("media_items")}
@@ -121,6 +125,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Cinearis API", version=VERSION, lifespan=lifespan)
 app.include_router(analysis_router)
 app.include_router(metadata_router)
+app.include_router(collection_router)
 
 
 @app.get("/api/live")
@@ -166,17 +171,7 @@ def create_media(payload: MediaCreate):
     if not title:
         raise HTTPException(status_code=422, detail="Titel darf nicht leer sein")
     with Session(engine) as session:
-        if payload.provider and payload.provider_id:
-            matching = session.scalar(select(MediaItem).where(
-                MediaItem.provider == payload.provider,
-                MediaItem.provider_id == payload.provider_id,
-                MediaItem.kind == payload.kind,
-            ))
-        else:
-            matching = session.scalar(select(MediaItem).where(
-                func.lower(MediaItem.title) == title.lower(),
-                MediaItem.kind == payload.kind,
-            ))
+        matching = duplicate_for(session, MediaItem, title=title, kind=payload.kind, provider=payload.provider, provider_id=payload.provider_id)
         if matching:
             raise HTTPException(status_code=409, detail="Dieser Titel ist bereits in deiner Sammlung")
         data = payload.model_dump(exclude={"aliases"})
@@ -266,6 +261,8 @@ def delete_media(item_id: int):
         item = session.get(MediaItem, item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Titel nicht gefunden")
+        for entry in session.scalars(select(EpisodeProgress).where(EpisodeProgress.media_id == item_id)).all():
+            session.delete(entry)
         session.delete(item)
         session.commit()
 
