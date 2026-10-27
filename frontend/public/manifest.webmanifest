@@ -1,0 +1,13 @@
+{
+  "name": "Cinearis",
+  "short_name": "Cinearis",
+  "description": "Deine persönliche Film-, Serien- und Anime-Sammlung.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090e1c",
+  "theme_color": "#090e1c",
+  "icons": [
+    {"src": "/assets/Cinearis.png", "sizes": "any", "type": "image/png", "purpose": "any"}
+  ]
+}
