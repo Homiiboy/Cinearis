@@ -42,7 +42,9 @@ services:
       dockerfile: frontend/Dockerfile
     restart: unless-stopped
     ports:
-      - "${CINEARIS_PORT:-8088}:80"
+      - "${CINEARIS_BIND_IP:-127.0.0.1}:${CINEARIS_PORT:-8088}:80"
+    volumes:
+      - ./config/nginx.htpasswd:/etc/nginx/.htpasswd:ro
     depends_on:
       backend:
         condition: service_healthy
