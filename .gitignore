@@ -16,3 +16,7 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Generated passwords and database exports
+config/nginx.htpasswd
+backups/
