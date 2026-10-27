@@ -10,6 +10,7 @@
 git clone https://github.com/Homiiboy/Cinearis.git
 cd Cinearis
 cp .env.example .env
+sh scripts/setup-auth.sh
 # Wichtig: POSTGRES_PASSWORD in .env auf ein starkes Passwort ändern!
 docker compose up -d --build
 docker compose ps
@@ -225,3 +226,57 @@ Unit-Tests im Backend:
 ```bash
 cd backend && python -m unittest discover -s tests -v
 ```
+
+## Phase 8 – Sicherheit, PWA, Backup und ForgeCore-Export (v1.0.0 RC)
+
+### Erster Start (ZimaOS)
+
+Die Anwendung besitzt nun **verpflichtenden HTTP-Basic-Auth-Zugangsschutz**. Lege vor dem Docker-Start eine Passwortdatei an:
+
+```bash
+git pull
+cp -n .env.example .env
+sh scripts/setup-auth.sh
+nano .env
+docker compose config
+docker compose up -d --build
+```
+
+Das Script schreibt den gehashten Zugang in `config/nginx.htpasswd`; diese Datei ist aus Git ausgeschlossen. Das Passwort muss mindestens 12 Zeichen haben. **Keine Passwörter, Datenbank-Backups oder API-Schlüssel committen.** Bei einem Update ist das erneute Anlegen der Passwortdatei nicht nötig, sofern sie vorhanden ist.
+
+**Netzwerk:** Der Standard `CINEARIS_BIND_IP=127.0.0.1` beschränkt den Port auf den ZimaOS-Host. Für Zugriff aus dem privaten LAN kann in `.env` `CINEARIS_BIND_IP=0.0.0.0` gesetzt werden. Danach `docker compose up -d` ausführen und `http://ZIMAOS-IP:8088` öffnen. HTTP-Basic-Auth über unverschlüsseltes HTTP schützt **nicht** vor Passwortmitschnitt im Netzwerk; nutze für Fernzugriff zwingend einen HTTPS-Reverse-Proxy (oder einen vertrauenswürdigen VPN-Tunnel) und veröffentliche Port 8088 nicht direkt im Internet.
+
+### ForgeCore-Export
+
+Unter **ForgeCore** kannst du eine Vorschau und anschließend eine **JSON- oder CSV-Datei** mit fehlenden Titeln herunterladen.
+
+- Bei vorhandenem Jellyfin-Snapshot werden nur Titel mit Status `missing` exportiert. Mehrdeutige Treffer werden ausgeschlossen.
+- Ohne Snapshot werden Titel mit persönlichem Status `owned` oder `ignored` ausgeschlossen.
+- Diese Schnittstelle startet **keine Downloads**, sendet **keine externen API-Aufrufe** an ForgeCore und unterstellt keinen bislang unbestätigten ForgeCore-API-Vertrag.
+- Die JSON-Ausgabe enthält ein dokumentierbares `schema_version: 1`, den Erstellungszeitpunkt und Metadaten-IDs. Beide Formate müssen vor einer späteren Direktintegration gegen ForgeCore validiert werden.
+
+API: `GET /api/forgecore/preview` sowie `GET /api/forgecore/export?format=json|csv`.
+
+### PWA
+
+`manifest.webmanifest`, App-Icon und Service Worker sind eingebaut. Die Installation ist über moderne Browser unter **HTTPS** oder `localhost` möglich, soweit der jeweilige Browser das unterstützt. Der Service Worker zeigt bei fehlender Verbindung nur eine statische Offline-Seite – **Sammlung und API-Daten werden nicht offline gespeichert**.
+
+### PostgreSQL-Backup
+
+```bash
+bash scripts/backup.sh
+```
+
+Die Sicherung liegt mit restriktiven Dateirechten in `backups/cinearis-YYYYMMDDTHHMMSSZ.sql.gz`. Der Ordner wird nicht in Git eingecheckt. Kopiere Backups zusätzlich auf ein anderes Laufwerk, denn ein Backup auf derselben Festplatte schützt nicht vor Ausfall.
+
+**Restore nur nach Sicherung der aktuellen Datenbank und in einem Wartungsfenster.** Beispiel für eine **leere** wiederherzustellende Test-Datenbank (niemals blind über produktive Daten importieren):
+
+```bash
+gzip -dc backups/cinearis-BEISPIEL.sql.gz | docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+Die Ziel-Datenbank muss vor diesem Beispiel leer sein. Bei einem tatsächlichen Produktiv-Restore zuerst Anwendungen stoppen, Ziel-Datenbank korrekt neu anlegen und das Restore-Konzept anhand eines **separaten Testcontainers** prüfen. Das Script sichert die PostgreSQL-Datenbank, nicht die `.env`-Datei oder Zugangsdaten.
+
+### Release-Validierung
+
+Prüfe die Datei [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). Die Implementierung auf GitHub ist **noch kein bestandener ZimaOS-End-to-End-Test** und sollte bis zum Abschluss als Release-Kandidat gelten.
