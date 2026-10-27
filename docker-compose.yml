@@ -26,6 +26,8 @@ services:
       VISION_MODEL: ${VISION_MODEL:-gpt-4.1-mini}
       JELLYFIN_URL: ${JELLYFIN_URL:-}
       JELLYFIN_API_KEY: ${JELLYFIN_API_KEY:-}
+      FORGECORE_URL: ${FORGECORE_URL:-}
+      FORGECORE_PASSWORD: ${FORGECORE_PASSWORD:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
