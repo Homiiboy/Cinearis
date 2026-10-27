@@ -63,14 +63,14 @@ export default function App() {
       </nav>
       <div className="side-bottom">
         <div className="system-card"><span className="system-icon"><ShieldCheck size={18}/></span><div><strong>Systemstatus</strong><small>{online === null ? 'Verbindung wird geprüft' : online ? 'Alle Systeme online' : 'Backend nicht erreichbar'}</small></div><span className={`status-dot ${online ? 'ok' : online === false ? 'bad' : ''}`}/></div>
-        <div className="side-version"><span>Cinearis</span><span>v0.2.0</span></div>
+        <div className="side-version"><span>Cinearis</span><span>v0.3.0</span></div>
       </div>
     </aside>
 
     <main className="main">
       <header className="topbar">
         <div className="breadcrumbs"><button className="menu-toggle" onClick={() => setMobile(true)} aria-label="Menü öffnen"><Menu size={21}/></button><span>Workspace</span><span className="slash">/</span><strong>{page}</strong></div>
-        <div className="top-actions"><span className="phase-badge"><span className="phase-dot"/> PHASE 02 · IMAGE RECOGNITION</span><div className="avatar">C</div></div>
+        <div className="top-actions"><span className="phase-badge"><span className="phase-dot"/> PHASE 03 · METADATA</span><div className="avatar">C</div></div>
       </header>
       <div className="content">
         <div className="intro"><div><div className="eyebrow"><Sparkles size={14}/> YOUR PERSONAL MEDIA UNIVERSE</div><h1>{page === 'Übersicht' ? <>Willkommen bei <span>Cinearis.</span></> : page + '.'}</h1><p>{page === 'Übersicht' ? 'Entdecke, sammle und organisiere Filme, Serien und Anime – alles an einem Ort.' : 'Dein zentraler Ort für Entdeckungen und Mediensammlungen.'}</p></div><button className="outline-btn" onClick={() => navigate('Meine Sammlung')}><BookOpen size={16}/> Sammlung ansehen <ArrowRight size={16}/></button></div>
