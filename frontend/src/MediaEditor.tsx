@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, ChevronDown, Edit3, Search, Trash2, Tv, X } from 'lucide-react'
+import { Check, ChevronDown, Tv, X } from 'lucide-react'
 import type { Media } from './Library'
 
 type Episode = { season:number; episode:number }
