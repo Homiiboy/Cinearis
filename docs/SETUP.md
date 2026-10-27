@@ -48,3 +48,11 @@ Frontend: `cd frontend && npm install && npm run dev`. Vite leitet `/api` an loc
 - Keine Instagram-, KI-, Jellyfin- oder ForgeCore-Integration in v0.1.0.
 - PostgreSQL ist ausschließlich intern verfügbar und wird nicht als Port auf dem Host freigegeben.
 - Für spätere Schemaänderungen sind versionierte Datenbankmigrationen vorgesehen.
+
+## Medien manuell hinzufügen (v0.1.1)
+
+Unter **Entdecken** den Medientyp auswählen und einen Namen eingeben. Animes werden über AniList gesucht. Für Film- und Seriensuche in `.env` einen eigenen `TMDB_API_KEY` eintragen und `docker compose up -d --build` erneut ausführen. Alternativ können Titel ohne externen Anbieter über **Manuell hinzufügen** gespeichert werden.
+
+Unter **Meine Sammlung** einen Titel anklicken: Mediathekstatus und Sehfortschritt lassen sich getrennt verwalten. Filme erlauben *Gesehen* / *Nicht gesehen*. Serien/Anime unterstützen außerdem *Bis zu einer Folge* (Staffel plus Episode) sowie *Staffel vollständig gesehen* (Staffelnummer). Der aktuelle Stand beschreibt jeweils nur einen Fortschrittspunkt, noch keine vollständige staffelübergreifende Seh-Historie.
+
+Vor dem Update vorhandene PostgreSQL-Daten sichern. Das Backend ergänzt fehlende Datenbankspalten beim Start; es löscht die bisherige Sammlung nicht.
