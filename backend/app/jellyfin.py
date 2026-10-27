@@ -168,7 +168,8 @@ def build_router(Base, MediaItem, engine):
                     if len(collected) > MAX_ITEMS:
                         raise HTTPException(status_code=413, detail="Jellyfin-Bibliothek überschreitet das derzeitige Scanlimit")
                     offset += len(page)
-                    if not page or offset >= data.get("TotalRecordCount", offset) or len(page) < PAGE_SIZE:
+                    total = data.get("TotalRecordCount")
+                    if not page or (isinstance(total, int) and offset >= total) or (total is None and len(page) < PAGE_SIZE):
                         break
         except HTTPException:
             raise
