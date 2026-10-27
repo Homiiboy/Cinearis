@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Download, FileJson, FileSpreadsheet, ShieldCheck, Send } from 'lucide-react'
 
-type Item = { cinearis_id:number;title:string;media_type:string;release_year:number|null;library_check:string }
+type Item = { cinearis_id:number;title:string;media_type:string;release_year:number|null;library_check:string; provider:string; provider_id:string }
 type Preview = { items:Item[];count:number;jellyfin_snapshot:boolean;disclaimer:string }
 export default function ForgeCoreExport(){
  const [data,setData]=useState<Preview|null>(null)
@@ -42,7 +42,7 @@ export default function ForgeCoreExport(){
   <div className="forge-summary"><strong>{data?data.count:'–'}</strong><div><b>Titel für den Export</b><small>{data?.jellyfin_snapshot?'Abgleich anhand des letzten Jellyfin-Snapshots':'Ohne Jellyfin-Snapshot: nur persönliche Statuswerte'}</small></div></div>
   <p className="library-muted">{configured?'ForgeCore-Verbindung konfiguriert. Für passende TMDB-Titel ist die direkte Merkliste verfügbar.':'Direkte Übergabe noch nicht konfiguriert. Der Datei-Export funktioniert auch ohne ForgeCore-Verbindung.'}</p>
   <div className="forge-buttons"><button disabled={busy} className="outline-btn" onClick={()=>void refresh()}>Vorschau aktualisieren</button><button className="outline-btn" onClick={()=>download('json')}><FileJson size={17}/> JSON exportieren</button><button className="primary-btn" onClick={()=>download('csv')}><FileSpreadsheet size={17}/> CSV exportieren</button></div>
-  {data&&data.items.length>0&&<div className="forge-preview">{data.items.slice(0,10).map(item=><div key={item.cinearis_id}><span>{item.title}</span><small>{item.media_type} · {item.release_year||'ohne Jahr'}</small>{configured&&<button className="outline-btn" disabled={sending!==null} onClick={()=>void send(item)}><Send size={14}/> Merkliste</button>}</div>)}{data.items.length>10&&<p>… und {data.items.length-10} weitere Titel</p>}</div>}
+  {data&&data.items.length>0&&<div className="forge-preview">{data.items.slice(0,10).map(item=><div key={item.cinearis_id}><span>{item.title}</span><small>{item.media_type} · {item.release_year||'ohne Jahr'}</small>{configured&&item.provider==='tmdb'&&/^\\d+$/.test(item.provider_id)&&<button className="outline-btn" disabled={sending!==null} onClick={()=>void send(item)}><Send size={14}/> Merkliste</button>}</div>)}{data.items.length>10&&<p>… und {data.items.length-10} weitere Titel</p>}</div>}
   <p className="library-muted">Bei vorhandener Konfiguration können geeignete Titel einzeln an die ForgeCore-Merkliste übergeben werden. Es werden keine Downloads ausgelöst. Mehrdeutige Jellyfin-Treffer werden vorsichtshalber nicht als fehlend exportiert.</p>
  </section>
 }
