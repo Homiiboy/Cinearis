@@ -8,9 +8,20 @@
 
 Cinearis ist Teil des **Novarion-Ökosystems**. Die selbst gehostete Webanwendung erkennt Titel aus Bildern und – soweit technisch und rechtlich zugänglich – Social-Media-Beiträgen, erstellt eine dauerhaft wachsende persönliche Merkliste und gleicht diese mit **Jellyfin / Velaris** ab. Eine spätere Verbindung zu **ForgeCore** ist geplant.
 
-> **Projektstatus:** **v0.1.0 – Fundament implementiert** · Docker-Betrieb auf ZimaOS noch nicht praktisch verifiziert · Bildanalyse, Instagram, Jellyfin und ForgeCore folgen in späteren Phasen.
+> **Projektstatus:** **v0.1.1 – Manuelle Suche und Sehfortschritt implementiert** · Docker-Betrieb auf ZimaOS noch nicht praktisch verifiziert · Bildanalyse, Instagram, Jellyfin und ForgeCore folgen in späteren Phasen.
 
-## ✨ Geplante Funktionen
+## ✅ Bereits umgesetzt (v0.1.1)
+
+- **Manuell suchen:** Filme und Serien über TMDB (eigener API-Schlüssel), Anime über AniList, plus direkte Titel-Erfassung ohne API.
+- **Titel hinzufügen:** Sammlung mit Dublettenprüfung für Anbieter-IDs und manuell erfasste Namen.
+- **Sehfortschritt:** Filme *gesehen/nicht gesehen*; Serien und Anime *nicht gesehen*, *komplett gesehen*, *bis Staffel/Folge* oder *Staffel gesehen*.
+- **Getrennte Statuswerte:** Ein Titel kann bereits in der Mediathek liegen und dennoch ungesehen sein.
+- **Sammlung und Wunschliste:** Einträge anzeigen, Status und Fortschritt ändern und Titel löschen.
+- **Datenübernahme:** Bestehende v0.1.0-Datenbank um die neuen Spalten erweitern.
+
+Die Staffel-/Folgenangabe speichert aktuell einen **einzelnen Fortschrittspunkt pro Titel**, keine vollständige Historie mehrerer abgehakter Staffeln. Die manuelle Erfassung und der Fortschritt benötigen weder Instagram noch KI.
+
+## ✨ Weitere geplante Funktionen
 
 - **Bilderkennung:** Poster, Screenshots, Collagen, Szenen und Texteinblendungen mit Vision-KI und OCR analysieren.
 - **Instagram-Import:** Beitrags-Links analysieren, soweit erlaubte Schnittstellen oder zugängliche Medien dies ermöglichen; manueller Screenshot-/Bild-Upload als verlässlicher Fallback.
@@ -90,7 +101,7 @@ Sobald `assets/favicon.ico` vorhanden ist, kann die Website z. B. so darauf verw
 
 Bei einem späteren Build werden die Dateien im statischen öffentlichen Verzeichnis bereitgestellt.
 
-## 🚀 Installation (Phase 1)
+## 🚀 Installation / Update
 
 ```bash
 git clone https://github.com/Homiiboy/Cinearis.git
@@ -102,7 +113,7 @@ docker compose up -d --build
 
 Danach `http://<SERVER-IP>:8088` öffnen. Für den API-/Datenbankcheck `http://<SERVER-IP>:8088/api/health` aufrufen.
 
-**Ausführliche Anleitung:** [docs/SETUP.md](docs/SETUP.md). **Achtung:** Phase 1 hat noch keine Benutzeranmeldung – nur im privaten Heimnetz betreiben, nicht ungeschützt ins Internet stellen.
+Zum Aktualisieren nach einem bestehenden Checkout: `git pull && docker compose up -d --build`. Für die TMDB-Suche `TMDB_API_KEY` in `.env` ergänzen. **Ausführliche Anleitung:** [docs/SETUP.md](docs/SETUP.md). **Achtung:** Phase 1 hat noch keine Benutzeranmeldung – nur im privaten Heimnetz betreiben, nicht ungeschützt ins Internet stellen.
 
 ## 🔐 Datenschutz & Sicherheit
 
@@ -124,6 +135,7 @@ Danach `http://<SERVER-IP>:8088` öffnen. Für den API-/Datenbankcheck `http://<
 - [x] Assets-Ordner und Projektlogo
 - [x] Favicon.ico im Repository
 - [x] v0.1.0 – Projektfundament implementiert (ZimaOS-Laufzeittest ausstehend)
+- [x] v0.1.1 – Manuelle Mediensuche und grundlegender Sehfortschritt (Integrationstest auf ZimaOS ausstehend)
 - [ ] v0.2.0 – Bildanalyse
 - [ ] v0.3.0 – Metadaten
 - [ ] v0.4.0 – Sammlung
