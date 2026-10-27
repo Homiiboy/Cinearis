@@ -1,5 +1,9 @@
 # Cinearis 🎬
 
+<p align="center">
+  <img src="assets/Cinearis.png" alt="Cinearis Logo" width="180" />
+</p>
+
 **KI-gestützte Entdeckung, Organisation und Verwaltung von Filmen, Serien und Animes.**
 
 Cinearis ist Teil des **Novarion-Ökosystems**. Die selbst gehostete Webanwendung erkennt Titel aus Bildern und – soweit technisch und rechtlich zugänglich – Social-Media-Beiträgen, erstellt eine dauerhaft wachsende persönliche Merkliste und gleicht diese mit **Jellyfin / Velaris** ab. Eine spätere Verbindung zu **ForgeCore** ist geplant.
@@ -60,7 +64,8 @@ Die technischen Entscheidungen können sich mit der Entwicklung ändern.
 Cinearis/
 ├── assets/
 │   ├── .gitkeep
-│   └── favicon.png           # später hinzufügen
+│   ├── Cinearis.png          # offizielles Projektlogo
+│   └── favicon.ico           # Browser-Favicon (vorbereitet)
 ├── frontend/                 # ab Phase 1
 ├── backend/                  # ab Phase 1
 ├── database/                 # ab Phase 1
@@ -71,7 +76,18 @@ Cinearis/
 └── README.md
 ```
 
-Der Ordner **`assets/`** ist bereits für das spätere `favicon.png` vorbereitet. Ein tatsächliches Favicon wurde noch nicht hinzugefügt.
+Das offizielle Cinearis-Logo liegt bereits unter **`assets/Cinearis.png`** und wird oben in dieser README angezeigt. Aus diesem Motiv wurden Favicon-Varianten (16 × 16, 32 × 32, 48 × 48, .ico, Apple Touch und PWA) vorbereitet; die generierten Varianten müssen noch in `assets/` hochgeladen werden.
+
+Sobald `assets/favicon.ico` vorhanden ist, kann die Website z. B. so darauf verweisen:
+
+```html
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/assets/site.webmanifest" />
+```
+
+Bei einem späteren Build werden die Dateien im statischen öffentlichen Verzeichnis bereitgestellt.
 
 ## 🔐 Datenschutz & Sicherheit
 
@@ -90,7 +106,8 @@ Der Ordner **`assets/`** ist bereits für das spätere `favicon.png` vorbereitet
 ## 📌 Entwicklungsstand
 
 - [x] Repository und Entwicklungs-Roadmap
-- [x] Assets-Ordner vorbereitet
+- [x] Assets-Ordner und Projektlogo
+- [ ] Generierte Favicon-Varianten ins Repository hochladen
 - [ ] v0.1.0 – Projektfundament
 - [ ] v0.2.0 – Bildanalyse
 - [ ] v0.3.0 – Metadaten
